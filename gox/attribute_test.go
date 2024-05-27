@@ -1,0 +1,46 @@
+package gox
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestAttribute(t *testing.T) {
+	t.Run(
+		"render class", func(t *testing.T) {
+			classes := []string{"test-1", "test-2"}
+			class := Class(classes...)
+			assert.Equal(t, fmt.Sprintf(`class="%s"`, strings.Join(classes, " ")), Render(class))
+		},
+	)
+	t.Run(
+		"render style", func(t *testing.T) {
+			styles := "background:blue;font-weight:700;color:white;"
+			style := Style(Raw(styles))
+			assert.Equal(t, fmt.Sprintf(`style="%s"`, styles), Render(style))
+		},
+	)
+	t.Run(
+		"render custom data", func(t *testing.T) {
+			customData := CustomData("item", "test")
+			assert.Equal(t, `data-item="test"`, Render(customData))
+		},
+	)
+	t.Run(
+		"render checked", func(t *testing.T) {
+			assert.Equal(t, `checked`, Render(Checked()))
+			assert.Equal(t, `checked="true"`, Render(Checked(true)))
+			assert.Equal(t, `checked="false"`, Render(Checked(false)))
+		},
+	)
+	t.Run(
+		"render selected", func(t *testing.T) {
+			assert.Equal(t, `selected`, Render(Selected()))
+			assert.Equal(t, `selected="true"`, Render(Selected(true)))
+			assert.Equal(t, `selected="false"`, Render(Selected(false)))
+		},
+	)
+}
