@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
+	
 	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v3"
 )
@@ -119,12 +119,13 @@ func (t *translator) parse(lang, prefix string, data map[string]any) error {
 		if !hasPrefix {
 			key = fmt.Sprintf("%v", dataKey)
 		}
-		subdata, ok := item.(map[string]any)
-		if !ok {
+		switch d := item.(type) {
+		case string:
 			t.translates[lang][key] = fmt.Sprintf("%v", item)
-		}
-		if ok {
-			return t.parse(lang, key, subdata)
+		case map[string]any:
+			if err := t.parse(lang, key, d); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

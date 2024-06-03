@@ -1,6 +1,7 @@
 package gox
 
 import (
+	"fmt"
 	"strings"
 	
 	"golang.org/x/exp/constraints"
@@ -195,8 +196,14 @@ func Checked(values ...bool) Node {
 	return createAttribute(attributeChecked, values...)
 }
 
-func Class(values ...string) Node {
-	return createAttribute(attributeClass, strings.Join(values, " "))
+func Class(value any) Node {
+	switch v := value.(type) {
+	case string:
+		return createAttribute(attributeClass, v)
+	case fmt.Stringer:
+		return createAttribute(attributeClass, v.String())
+	}
+	return createAttribute(attributeClass, fmt.Sprintf("%v", value))
 }
 
 func Cols(values ...int) Node {
@@ -371,7 +378,7 @@ func Lang(values ...string) Node {
 	return createAttribute(attributeLang, values...)
 }
 
-func Loading(values ...bool) Node {
+func Loading(values ...string) Node {
 	return createAttribute(attributeLoading, values...)
 }
 

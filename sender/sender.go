@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	
-	"github.com/daarlabs/arcanum/auth"
 	"github.com/daarlabs/arcanum/util/constant/contentType"
 	"github.com/daarlabs/arcanum/util/constant/dataType"
+	"github.com/daarlabs/arcanum/util/constant/fileSuffix"
 )
 
 type Send interface {
@@ -26,6 +27,7 @@ type ExtendableSend interface {
 	Bool(value bool) error
 	Redirect(url string) error
 	File(name string, bytes []byte) error
+	Asset(name string, bytes []byte) error
 }
 
 type Sender struct {
@@ -34,13 +36,12 @@ type Sender struct {
 	ContentType string
 	Value       string
 	StatusCode  int
-	request     *http.Request
-	response    http.ResponseWriter
-	auth        auth.Manager
+	r           *http.Request
+	w           http.ResponseWriter
 	write       *bool
 }
 
-func New(write ...*bool) *Sender {
+func New(request *http.Request, response http.ResponseWriter, write ...*bool) *Sender {
 	var w *bool
 	if len(write) == 0 {
 		w = new(bool)
@@ -52,11 +53,13 @@ func New(write ...*bool) *Sender {
 	return &Sender{
 		StatusCode: http.StatusOK,
 		write:      w,
+		w:          response,
+		r:          request,
 	}
 }
 
 func (s *Sender) Header() http.Header {
-	return s.response.Header()
+	return s.w.Header()
 }
 
 func (s *Sender) Status(statusCode int) Send {
@@ -74,7 +77,7 @@ func (s *Sender) Error(e any) error {
 	var err error
 	switch v := e.(type) {
 	case nil:
-		return s.Bool(true)
+		return errors.New(http.StatusText(s.StatusCode))
 	case string:
 		err = errors.New(v)
 	case error:
@@ -149,6 +152,9 @@ func (s *Sender) Redirect(url string) error {
 		return nil
 	}
 	s.Value = url
+	if s.StatusCode == http.StatusOK {
+		s.StatusCode = http.StatusMovedPermanently
+	}
 	s.DataType = dataType.Redirect
 	return nil
 }
@@ -161,5 +167,22 @@ func (s *Sender) File(name string, bytes []byte) error {
 	s.Bytes = bytes
 	s.DataType = dataType.Stream
 	s.ContentType = contentType.OctetStream
+	return nil
+}
+
+func (s *Sender) Asset(name string, bytes []byte) error {
+	if !*s.write {
+		return nil
+	}
+	s.Value = name
+	s.Bytes = bytes
+	s.DataType = dataType.Asset
+	s.ContentType = contentType.OctetStream
+	if strings.HasSuffix(name, fileSuffix.Css) {
+		s.ContentType = contentType.Css
+	}
+	if strings.HasSuffix(name, fileSuffix.Js) {
+		s.ContentType = contentType.Javascript
+	}
 	return nil
 }

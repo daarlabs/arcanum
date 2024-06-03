@@ -1,6 +1,8 @@
 package mirage
 
 import (
+	"net/url"
+	
 	"github.com/daarlabs/arcanum/gox"
 	
 	"github.com/daarlabs/arcanum/sender"
@@ -23,7 +25,14 @@ type response struct {
 }
 
 func (r *response) Refresh() error {
-	return r.Redirect(r.ctx.Request().Path())
+	if !r.ctx.Request().Is().Action() {
+		return r.Redirect(r.ctx.Generate().Current())
+	}
+	path, err := url.JoinPath(r.ctx.Config().Router.Prefix.Proxy, r.ctx.Request().Path())
+	if err != nil {
+		return r.Error(err)
+	}
+	return r.Redirect(path)
 }
 
 func (r *response) Layout(name string) Response {
@@ -47,7 +56,12 @@ func (r *response) Render(nodes ...gox.Node) error {
 	if r.layout != nil && r.l != nil && !r.ctx.Request().Is().Hx() {
 		return r.Html(gox.Render(r.l(r.ctx, nodes...)))
 	}
-	return r.Html(gox.Render(nodes...))
+	var style string
+	rendered := gox.Render(nodes...)
+	if r.ctx.tempest.Updated && r.ctx.Request().Is().Hx() {
+		style = gox.Render(gox.Style(gox.Element(), gox.Type("text/css"), gox.Raw(r.ctx.tempest.Build())))
+	}
+	return r.Html(style + rendered)
 }
 
 func (r *response) Intercept() Intercept {

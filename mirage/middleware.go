@@ -15,22 +15,25 @@ func createLangMiddleware() Handler {
 		if !cfg.Enabled || len(cfg.Languages) == 0 {
 			return c.Continue()
 		}
-		if !c.Lang().Exists() {
-			mainLangCode := c.Lang().Main()
-			c.Cookie().Set(langCookieKey, mainLangCode, langCookieDuration)
-			if cfg.Path {
-				return c.Response().Redirect("/" + mainLangCode + "/")
-			}
-		}
-		var langExists bool
+		var validLang bool
 		current := c.Lang().Current()
 		for _, l := range cfg.Languages {
 			if l.Code == current {
-				langExists = true
+				validLang = true
 			}
 		}
-		if !langExists && cfg.Path {
-			return c.Response().Redirect("/" + c.Lang().Main() + "/")
+		if validLang {
+			c.Cookie().Set(langCookieKey, c.Lang().Current(), langCookieDuration)
+		}
+		if !validLang {
+			mainLang := c.Lang().Main()
+			c.Cookie().Set(langCookieKey, mainLang, langCookieDuration)
+			if cfg.Path {
+				return c.Response().Redirect("/" + mainLang + "/")
+			}
+		}
+		if len(c.Request().QueryParam(langQueryKey)) > 0 {
+			return c.Response().Refresh()
 		}
 		return c.Continue()
 	}

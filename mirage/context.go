@@ -3,10 +3,10 @@ package mirage
 import (
 	"context"
 	"net/http"
-	"strings"
 	"sync"
 	
 	"github.com/daarlabs/arcanum/filesystem"
+	"github.com/daarlabs/arcanum/tempest"
 	
 	"github.com/daarlabs/arcanum/auth"
 	"github.com/daarlabs/arcanum/cache"
@@ -38,6 +38,7 @@ type Ctx interface {
 	Parse() parser.Parse
 	Request() Request
 	Response() Response
+	Tempest() tempest.Class
 	Translate(key string, args ...map[string]any) string
 }
 
@@ -60,6 +61,7 @@ type ctx struct {
 	assets           *assets
 	lang             *lang
 	component        *componentCtx
+	tempest          *tempest.Context
 	write            *bool
 }
 
@@ -91,7 +93,10 @@ func createContext(p ctxParam) *ctx {
 		assets:           p.assets,
 		write:            &write,
 	}
-	c.cookie = cookie.New(c.r, c.w, c.createCookiePathBasedOnRouterPrefix())
+	if c.config.Tempest != nil {
+		c.tempest = c.config.Tempest.Context()
+	}
+	c.cookie = cookie.New(c.r, c.w, c.createCookiePathBasedOnRouterCookiePrefix())
 	c.csrf = csrf.New(
 		csrf.Cache(c.Cache()),
 		csrf.Cookie(c.cookie),
@@ -99,7 +104,7 @@ func createContext(p ctxParam) *ctx {
 	)
 	c.lang = createLang(c.Config(), c.Request(), c.Cookie())
 	c.response = &response{
-		Sender: sender.New(&write),
+		Sender: sender.New(p.r, p.w, &write),
 		ctx:    c,
 		layout: p.layout,
 		l:      p.layout.factories[Main],
@@ -144,7 +149,7 @@ func (c *ctx) Cookie() cookie.Cookie {
 }
 
 func (c *ctx) Continue() error {
-	c.mu.Unlock()
+	// c.mu.Unlock()
 	return nil
 }
 
@@ -215,26 +220,16 @@ func (c *ctx) Translate(key string, args ...map[string]any) string {
 	return c.config.Localization.Translator.Translate(c.Lang().Current(), key, args...)
 }
 
-func (c *ctx) createCookiePathBasedOnRouterPrefix() string {
-	switch p := c.config.Router.Prefix.Path.(type) {
-	case string:
-		if !strings.HasPrefix(p, "/") {
-			p = "/" + p
-		}
-		return p
-	case map[string]string:
-		if !c.Config().Localization.Enabled {
-			return "/"
-		}
-		lp, ok := p[c.Lang().Current()]
-		if !ok {
-			return "/"
-		}
-		if !strings.HasPrefix(lp, "/") {
-			lp = "/" + lp
-		}
-		return lp
-	default:
-		return "/"
+func (c *ctx) Tempest() tempest.Class {
+	if c.config.Tempest == nil {
+		return nil
 	}
+	return c.tempest.Class()
+}
+
+func (c *ctx) createCookiePathBasedOnRouterCookiePrefix() string {
+	if len(c.config.Router.Prefix.Cookie) > 0 {
+		return c.config.Router.Prefix.Cookie
+	}
+	return "/"
 }

@@ -2,18 +2,17 @@ package gox
 
 import (
 	"fmt"
-	"strings"
 	"testing"
-
+	
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAttribute(t *testing.T) {
 	t.Run(
 		"render class", func(t *testing.T) {
-			classes := []string{"test-1", "test-2"}
-			class := Class(classes...)
-			assert.Equal(t, fmt.Sprintf(`class="%s"`, strings.Join(classes, " ")), Render(class))
+			classes := "test-1 test-2"
+			class := Class("test-1 test-2")
+			assert.Equal(t, fmt.Sprintf(`class="%s"`, classes), Render(class))
 		},
 	)
 	t.Run(

@@ -1,8 +1,10 @@
 package config
 
 type Prefix struct {
-	Name string
-	Path any
+	Name   string
+	Proxy  string
+	Cookie string
+	Path   any
 }
 
 type Router struct {

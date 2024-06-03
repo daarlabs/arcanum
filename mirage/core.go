@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"strings"
 	
 	"github.com/daarlabs/arcanum/config"
 )
@@ -38,6 +38,10 @@ const (
 ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░`
 )
 
+const (
+	Version = "0.1.0"
+)
+
 func New(cfg config.Config) Creampuff {
 	mux := http.NewServeMux()
 	rts := make([]*Route, 0)
@@ -48,18 +52,17 @@ func New(cfg config.Config) Creampuff {
 		mux:          mux,
 		routes:       rts,
 	}
+	c.assets = createAssets(cfg)
 	c.router = &router{
 		config: cfg,
 		mux:    mux,
 		prefix: cfg.Router.Prefix,
 		routes: &rts,
-	}
-	c.assets = &assets{
-		dir:    cfg.App.Assets,
-		public: cfg.App.Public,
+		assets: c.assets,
 	}
 	c.router.core = c
-	c.router.createGetWildcardRoute()
+	c.router.createWildcardRoute()
+	c.router.createDynamicAssetsRoute()
 	c.onInit()
 	return c
 }
@@ -74,10 +77,14 @@ func (c *core) Layout() Layout {
 }
 
 func (c *core) Run(address string) {
+	if strings.HasPrefix(address, ":") {
+		address = "localhost" + address
+	}
 	fmt.Println(logo)
 	fmt.Println("")
 	fmt.Println("Name: ", c.config.App.Name)
-	fmt.Println("Version: ", "0.1.0")
+	fmt.Println("Address: ", address)
+	fmt.Println("Version: ", Version)
 	log.Fatalln(http.ListenAndServe(address, c.mux))
 }
 
@@ -86,8 +93,5 @@ func (c *core) Mux() *http.ServeMux {
 }
 
 func (c *core) onInit() {
-	go func() {
-		time.Sleep(2 * time.Second)
-		c.assets.mustRead()
-	}()
+	c.assets.mustProcess()
 }

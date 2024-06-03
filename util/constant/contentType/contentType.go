@@ -8,4 +8,6 @@ const (
 	Json          = "application/json; charset=utf-8"
 	Xml           = "application/xml; charset=utf-8"
 	OctetStream   = "application/octet-stream; charset=utf-8"
+	Css           = "text/css; charset=utf-8"
+	Javascript    = "text/javascript; charset=utf-8"
 )

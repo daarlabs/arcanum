@@ -23,6 +23,7 @@ type lang struct {
 
 const (
 	langCookieKey = "X-Lang"
+	langQueryKey  = "lang"
 )
 
 var (
@@ -40,6 +41,10 @@ func createLang(config config.Config, req Request, cookie cookie.Cookie) *lang {
 	}
 	if config.Localization.Enabled && config.Localization.Path {
 		l.current = l.parseLangFromUrl()
+	}
+	l.current = req.QueryParam(langQueryKey, l.current)
+	if len(l.current) == 0 {
+		l.current = l.Main()
 	}
 	return l
 }

@@ -9,4 +9,5 @@ const (
 	Error    = "error"
 	Redirect = "redirect"
 	Stream   = "stream"
+	Asset    = "asset"
 )

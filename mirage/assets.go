@@ -2,16 +2,21 @@ package mirage
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
-	"strings"
+	
+	"github.com/dchest/uniuri"
+	
+	"github.com/daarlabs/arcanum/config"
 )
 
 type assets struct {
-	dir     string
-	public  string
+	config  config.Config
+	code    string
 	styles  []string
 	scripts []string
+	fonts   []string
 }
 
 type viteManifest struct {
@@ -23,22 +28,43 @@ type viteManifest struct {
 }
 
 const (
-	manifestFilaname = "manifest.json"
+	manifestFilaname  = "manifest.json"
+	distDir           = "dist"
+	tempestAssetsPath = "/.tempest/assets/"
 )
 
-func (a *assets) getDistDir() string {
-	if len(a.dir) == 0 || len(a.public) == 0 || !strings.Contains(a.dir, a.public) {
-		return ""
+func createAssets(config config.Config) *assets {
+	a := &assets{
+		config: config,
+		code:   uniuri.New(),
 	}
-	return a.dir[strings.Index(a.dir, a.public)+len(a.public):]
+	return a
+}
+
+func (a *assets) process() error {
+	if err := a.read(); err != nil {
+		return err
+	}
+	if err := a.prepareTempestStyles(); err != nil {
+		return err
+	}
+	if err := a.prepareTempestScripts(); err != nil {
+		return err
+	}
+	if err := a.prepareTempestFonts(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *assets) mustProcess() {
+	if err := a.process(); err != nil {
+		panic(err)
+	}
 }
 
 func (a *assets) read() error {
-	distDir := a.getDistDir()
-	if len(distDir) == 0 {
-		return nil
-	}
-	filePath, err := url.JoinPath(a.dir, manifestFilaname)
+	filePath, err := url.JoinPath(a.config.App.Assets, distDir, manifestFilaname)
 	if err != nil {
 		return err
 	}
@@ -55,14 +81,14 @@ func (a *assets) read() error {
 	}
 	for _, item := range assetsMap {
 		var err error
-		item.File, err = url.JoinPath(a.public, distDir, item.File)
+		item.File, err = url.JoinPath(a.config.Router.Prefix.Proxy, a.config.App.Public, distDir, item.File)
 		if err != nil {
 			continue
 		}
 		a.scripts = append(a.scripts, item.File)
 		for _, css := range item.Css {
 			var err error
-			css, err = url.JoinPath(a.public, distDir, css)
+			css, err = url.JoinPath(a.config.Router.Prefix.Proxy, a.config.App.Public, distDir, css)
 			if err != nil {
 				continue
 			}
@@ -72,9 +98,27 @@ func (a *assets) read() error {
 	return nil
 }
 
-func (a *assets) mustRead() {
-	err := a.read()
+func (a *assets) prepareTempestStyles() error {
+	r, err := url.JoinPath(a.config.Router.Prefix.Proxy, tempestAssetsPath, fmt.Sprintf("%s-%s.css", Main, a.code))
 	if err != nil {
-		panic(err)
+		return err
 	}
+	a.styles = append(a.styles, r)
+	return nil
+}
+
+func (a *assets) prepareTempestScripts() error {
+	r, err := url.JoinPath(a.config.Router.Prefix.Proxy, tempestAssetsPath, fmt.Sprintf("%s-%s.js", Main, a.code))
+	if err != nil {
+		return err
+	}
+	a.scripts = append(a.scripts, r)
+	return nil
+}
+
+func (a *assets) prepareTempestFonts() error {
+	for _, font := range a.config.Tempest.Fonts() {
+		a.fonts = append(a.fonts, font.Url)
+	}
+	return nil
 }

@@ -51,7 +51,7 @@ func (s *sender) Error(e any) error {
 	var err error
 	switch v := e.(type) {
 	case nil:
-		return s.Bool(true)
+		err = errors.New(http.StatusText(s.statusCode))
 	case string:
 		err = errors.New(v)
 	case error:
@@ -62,7 +62,7 @@ func (s *sender) Error(e any) error {
 	bytes, err := wrapError(err)
 	s.bytes = bytes
 	s.dataType = dataType.Error
-	s.contentType = contentType.Json
+	s.contentType = contentType.Html
 	if s.statusCode == http.StatusOK {
 		s.statusCode = http.StatusBadRequest
 	}
@@ -97,7 +97,7 @@ func (s *sender) Text(value string) error {
 	bytes, err := wrapResult(value)
 	s.bytes = bytes
 	s.dataType = dataType.Text
-	s.contentType = contentType.Json
+	s.contentType = contentType.Text
 	return err
 }
 

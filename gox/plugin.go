@@ -1,12 +1,13 @@
 package gox
 
 import (
+	"fmt"
 	"strings"
 )
 
 // Clsx plugin
 // Conditional classes rendering
-type Clsx map[string]bool
+type Clsx map[any]bool
 
 func (c Clsx) Node() Node {
 	return Class(c.String())
@@ -23,11 +24,18 @@ func (c Clsx) Merge(items ...Clsx) Clsx {
 
 func (c Clsx) String() string {
 	result := make([]string, 0)
-	for classes, use := range c {
+	for class, use := range c {
 		if !use {
 			continue
 		}
-		result = append(result, classes)
+		switch v := class.(type) {
+		case string:
+			result = append(result, v)
+		case fmt.Stringer:
+			result = append(result, v.String())
+		default:
+			result = append(result, fmt.Sprintf("%v", v))
+		}
 	}
 	return strings.Join(result, " ")
 }

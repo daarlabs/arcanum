@@ -13,4 +13,6 @@ const (
 	Origin             = "Origin"
 	SetCookie          = "Set-Cookie"
 	UserAgent          = "User-Agent"
+	ForwardedUri       = "X-Forwarded-Uri"
+	AcceptRanges       = "Accept-Ranges"
 )

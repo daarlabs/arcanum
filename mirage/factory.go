@@ -57,7 +57,18 @@ func (f factory) Form(fields ...*form.FieldBuilder) *form.Builder {
 		Method(method).
 		Action(link).
 		Request(f.ctx.r).
-		Messages(f.ctx.config.Localization.Form)
+		Messages(
+			form.Messages{
+				Email:     f.ctx.Translate(f.ctx.config.Localization.Form.Email),
+				Required:  f.ctx.Translate(f.ctx.config.Localization.Form.Required),
+				MinText:   f.ctx.Translate(f.ctx.config.Localization.Form.MinText),
+				MaxText:   f.ctx.Translate(f.ctx.config.Localization.Form.MaxText),
+				MinNumber: f.ctx.Translate(f.ctx.config.Localization.Form.MinNumber),
+				MaxNumber: f.ctx.Translate(f.ctx.config.Localization.Form.MaxNumber),
+				Multipart: f.ctx.Translate(f.ctx.config.Localization.Form.Multipart),
+				Invalid:   f.ctx.Translate(f.ctx.config.Localization.Form.Invalid),
+			},
+		)
 	if isCsrfEnabled && !f.ctx.Request().Is().Action() {
 		name := fmt.Sprintf("%s-%s", f.ctx.route.Name, uniuri.New())
 		token := f.ctx.Csrf().MustCreate(

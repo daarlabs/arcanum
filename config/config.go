@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/daarlabs/arcanum/filesystem"
+	"github.com/daarlabs/arcanum/tempest"
 	
 	"github.com/daarlabs/arcanum/mailer"
 	"github.com/daarlabs/arcanum/quirk"
@@ -18,4 +19,5 @@ type Config struct {
 	Router       Router
 	Security     Security
 	Smtp         mailer.Config
+	Tempest      *tempest.Tempest
 }

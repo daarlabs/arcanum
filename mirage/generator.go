@@ -7,6 +7,7 @@ import (
 	"strings"
 	
 	"github.com/daarlabs/arcanum/gox"
+	"github.com/daarlabs/arcanum/util"
 	
 	"github.com/daarlabs/arcanum/csrf"
 	"github.com/daarlabs/arcanum/form"
@@ -15,6 +16,7 @@ import (
 type Generator interface {
 	Assets() gox.Node
 	Action(name string, args ...Map) string
+	Current(qpm ...Map) string
 	Csrf(name string) gox.Node
 	Link(name string, args ...Map) string
 	PublicUrl(path string) string
@@ -30,7 +32,25 @@ func (g *generator) Assets() gox.Node {
 	if g.assets == nil {
 		return gox.Fragment()
 	}
+	googleLinksExist := false
 	return gox.Fragment(
+		gox.Range(
+			g.assets.fonts, func(font string, _ int) gox.Node {
+				var preconnects []gox.Node
+				isGoogle := strings.Contains(font, "googleapis.com")
+				if isGoogle && !googleLinksExist {
+					preconnects = append(preconnects, gox.Link(gox.Rel("preconnect"), gox.Href("https://fonts.googleapis.com")))
+					preconnects = append(
+						preconnects, gox.Link(gox.Rel("preconnect"), gox.Href("https://fonts.gstatic.com"), gox.CrossOrigin()),
+					)
+					googleLinksExist = true
+				}
+				return gox.Fragment(
+					gox.If(len(preconnects) > 0, gox.Fragment(preconnects...)),
+					gox.Link(gox.Rel("stylesheet"), gox.Href(font)),
+				)
+			},
+		),
 		gox.Range(
 			g.assets.styles, func(style string, _ int) gox.Node {
 				return gox.Link(gox.Rel("stylesheet"), gox.Type("text/css"), gox.Href(style))
@@ -58,7 +78,21 @@ func (g *generator) Action(name string, args ...Map) string {
 			qpm[k] = v
 		}
 	}
-	return g.Request().Path() + g.Query(qpm)
+	return g.Current(qpm)
+}
+
+func (g *generator) Current(qpm ...Map) string {
+	qp := make(Map)
+	if len(qpm) > 0 {
+		qp = qpm[0]
+	}
+	for k, v := range g.Request().Raw().URL.Query() {
+		if k == Action || k == langQueryKey {
+			continue
+		}
+		qp[k] = v
+	}
+	return g.proxyPathIfExists(g.ensurePathEndSlash(g.Request().Path())) + g.Query(qp)
 }
 
 func (g *generator) Csrf(name string) gox.Node {
@@ -77,15 +111,15 @@ func (g *generator) Link(name string, args ...Map) string {
 	for _, r := range *g.routes {
 		if g.config.Localization.Enabled && !g.config.Localization.Path {
 			if r.Name == name {
-				return g.replacePathParamsWithArgs(r.Path, args...)
+				return g.generatePath(r.Path, args...)
 			}
 			continue
 		}
 		if g.config.Localization.Enabled && r.Name == name && r.Lang == l {
-			return g.replacePathParamsWithArgs(r.Path, args...)
+			return g.generatePath(r.Path, args...)
 		}
 		if r.Name == name {
-			return g.replacePathParamsWithArgs(r.Path, args...)
+			return g.generatePath(r.Path, args...)
 		}
 	}
 	return ""
@@ -114,7 +148,7 @@ func (g *generator) Query(args Map) string {
 }
 
 func (g *generator) PublicUrl(path string) string {
-	r, err := url.JoinPath(g.config.App.Public, path)
+	r, err := url.JoinPath(g.config.Router.Prefix.Proxy, g.config.App.Public, path)
 	if err != nil {
 		return path
 	}
@@ -132,6 +166,22 @@ func (g *generator) SwitchLang(langCode string) string {
 		if r.Name == name && r.Lang == langCode {
 			return r.Path
 		}
+	}
+	return path
+}
+
+func (g *generator) generatePath(path string, args ...Map) string {
+	path = g.replacePathParamsWithArgs(path, args...)
+	return g.proxyPathIfExists(g.ensurePathEndSlash(path))
+}
+
+func (g *generator) ensurePathEndSlash(path string) string {
+	return strings.TrimSuffix(path, "/") + "/"
+}
+
+func (g *generator) proxyPathIfExists(path string) string {
+	if len(g.config.Router.Prefix.Proxy) > 0 {
+		return util.MustJoinPath(g.config.Router.Prefix.Proxy, path)
 	}
 	return path
 }

@@ -1,13 +1,15 @@
 package mirage
 
 import (
+	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	
 	"github.com/daarlabs/arcanum/config"
 	"github.com/daarlabs/arcanum/firewall"
+	"github.com/daarlabs/arcanum/util"
+	"github.com/daarlabs/arcanum/util/constant/fileSuffix"
 )
 
 type Router interface {
@@ -41,14 +43,17 @@ func (r *router) Route(path any, fn Handler, config ...RouteConfig) Router {
 		if r.config.Localization.Path {
 			for _, item := range r.config.Localization.Languages {
 				r.createRoute(v, fn, item.Code, config...)
+				r.createCanonicalRoute(v, item.Code, config...)
 			}
 		}
 		if !r.config.Localization.Path {
 			r.createRoute(v, fn, "", config...)
+			r.createCanonicalRoute(v, "", config...)
 		}
 	case map[string]string:
 		for l, p := range v {
 			r.createRoute(p, fn, l, config...)
+			r.createCanonicalRoute(p, "", config...)
 		}
 	}
 	return r
@@ -73,7 +78,7 @@ func (r *router) Group(path any, name ...string) Router {
 	}
 }
 
-func (r *router) createGetWildcardRoute() {
+func (r *router) createWildcardRoute() {
 	method := http.MethodGet
 	path := "/{path...}"
 	r.mux.HandleFunc(
@@ -85,6 +90,63 @@ func (r *router) createGetWildcardRoute() {
 			},
 		),
 	)
+}
+
+func (r *router) createDynamicAssetsRoute() {
+	path := tempestAssetsPath + "{name}"
+	r.mux.HandleFunc(
+		fmt.Sprintf("%s %s", http.MethodGet, path),
+		r.createHandler(
+			http.MethodGet, path, "assets", func(c Ctx) error {
+				name := c.Request().PathValue("name")
+				if strings.HasSuffix(name, fileSuffix.Css) && strings.Contains(name, "-"+r.assets.code+".") {
+					return c.Response().Asset(name, []byte(r.config.Tempest.Styles()))
+				}
+				if strings.HasSuffix(name, fileSuffix.Js) && strings.Contains(name, "-"+r.assets.code+".") {
+					return c.Response().Asset(name, []byte(r.config.Tempest.Scripts()))
+				}
+				return c.Response().Status(http.StatusNotFound).Error(http.StatusText(http.StatusNotFound))
+			},
+		),
+	)
+}
+
+func (r *router) createCanonicalHandler() Handler {
+	return func(c Ctx) error {
+		return c.Response().Status(http.StatusPermanentRedirect).Redirect(c.Generate().Current())
+	}
+}
+
+func (r *router) createCanonicalRoute(path string, lang string, config ...RouteConfig) {
+	if strings.HasSuffix(path, "/") {
+		path = strings.TrimSuffix(path, "/")
+	}
+	if path == "" {
+		return
+	}
+	var name string
+	methods := make([]string, 0)
+	for _, cfg := range config {
+		switch cfg.Type {
+		case routeMethod:
+			methods = cfg.Value.([]string)
+		case routeName:
+			name = cfg.Value.(string)
+		}
+	}
+	if len(methods) == 0 {
+		methods = append(methods, httpMethods...)
+	}
+	path = r.prefixPathWithLangIfEnabled(path, lang)
+	if len(r.prefix.Name) > 0 {
+		name = r.prefix.Name + namePrefixDivider + name
+	}
+	for _, method := range methods {
+		r.mux.HandleFunc(
+			fmt.Sprintf("%s %s", method, path),
+			r.createHandler(method, path, name, r.createCanonicalHandler()),
+		)
+	}
 }
 
 func (r *router) createRoute(path string, fn Handler, lang string, config ...RouteConfig) {
@@ -104,11 +166,11 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 	if r.prefix.Path != nil {
 		switch v := r.prefix.Path.(type) {
 		case string:
-			path = r.mustJoinPath(v, path)
+			path = util.MustJoinPath(v, path)
 		case map[string]string:
 			lp, ok := v[lang]
 			if ok {
-				path = r.mustJoinPath(lp, path)
+				path = util.MustJoinPath(lp, path)
 			}
 		}
 	}
@@ -167,7 +229,11 @@ func (r *router) createMatcher(path string) *regexp.Regexp {
 		}
 		res[i] = part
 	}
-	return regexp.MustCompile(strings.Join(res, "/"))
+	p := strings.Join(res, "/")
+	if !strings.HasSuffix(p, "/") {
+		p += "/"
+	}
+	return regexp.MustCompile("^" + p + "$")
 }
 
 func (r *router) formatPatternPath(path string) string {
@@ -178,17 +244,6 @@ func (r *router) formatPatternPath(path string) string {
 		return path + "/{$}"
 	}
 	return path + "{$}"
-}
-
-func (r *router) mustJoinPath(basePath string, path string) string {
-	if strings.Contains(path, "...") {
-		return strings.TrimSuffix(basePath, "/") + "/" + strings.TrimPrefix(path, "/")
-	}
-	p, err := url.JoinPath(basePath, path)
-	if err != nil {
-		panic(err)
-	}
-	return p
 }
 
 func (r *router) mergePrefixPath(prefixPath any, path any) any {
@@ -212,7 +267,7 @@ func (r *router) mergePrefixPath(prefixPath any, path any) any {
 
 func (r *router) prefixPathWithLangIfEnabled(path, lang string) string {
 	if r.config.Localization.Path && !strings.HasSuffix(path, "/"+lang+"/") {
-		return r.mustJoinPath("/"+lang+"/", path)
+		return util.MustJoinPath("/"+lang+"/", path)
 	}
 	return path
 }
