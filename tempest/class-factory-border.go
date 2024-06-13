@@ -10,6 +10,15 @@ func borderWidthClass(selector string, value string) string {
 	)
 }
 
+func borderDirectionWidthClass(direction string, selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{border-%s-width: %s;}`,
+		selector,
+		direction,
+		value,
+	)
+}
+
 func borderRadiusClass(selector string, value string) string {
 	return fmt.Sprintf(
 		`%s{border-radius: %s;}`,

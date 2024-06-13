@@ -11,9 +11,9 @@ func createSuffix(value any) string {
 	case int:
 		r = fmt.Sprintf("%d", v)
 	case float32:
-		r = fmt.Sprintf("%.2f", v)
+		r = createMostSuitableNumber(float64(v))
 	case float64:
-		r = fmt.Sprintf("%.2f", v)
+		r = createMostSuitableNumber(v)
 	case string:
 		r = v
 	default:
@@ -35,20 +35,20 @@ func createValue(value any, unit string) string {
 		}
 	case float32:
 		if v == 0 {
-			r = fmt.Sprintf("%.2f", v)
+			r = createMostSuitableNumber(float64(v))
 		}
 		if v != 0 {
-			r = fmt.Sprintf("%.2f%s", v, unit)
+			r = createMostSuitableNumber(float64(v)) + unit
 		}
 	case float64:
 		if v == 0 {
-			r = fmt.Sprintf("%.2f", v)
+			r = createMostSuitableNumber(v)
 		}
 		if v != 0 {
-			r = fmt.Sprintf("%.2f%s", v, unit)
+			r = createMostSuitableNumber(v) + unit
 		}
 	case string:
-		r = v
+		r = valueEscaper.Replace(v)
 	default:
 		r = fmt.Sprintf("%v", v)
 	}

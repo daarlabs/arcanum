@@ -78,7 +78,7 @@ func (g *generator) Action(name string, args ...Map) string {
 			qpm[k] = v
 		}
 	}
-	return g.Current(qpm)
+	return g.Request().Path() + g.Generate().Query(qpm)
 }
 
 func (g *generator) Current(qpm ...Map) string {
@@ -148,7 +148,7 @@ func (g *generator) Query(args Map) string {
 }
 
 func (g *generator) PublicUrl(path string) string {
-	r, err := url.JoinPath(g.config.Router.Prefix.Proxy, g.config.App.Public, path)
+	r, err := url.JoinPath("/", g.config.Router.Prefix.Proxy, g.config.App.Public, path)
 	if err != nil {
 		return path
 	}

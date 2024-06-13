@@ -7,7 +7,7 @@ import (
 )
 
 type Security struct {
-	Auth      auth.Config
-	Csrf      csrf.Csrf
-	Firewalls []firewall.Firewall
+	Auth     auth.Config
+	Csrf     csrf.Csrf
+	Firewall []firewall.Firewall
 }

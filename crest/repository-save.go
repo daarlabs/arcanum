@@ -4,20 +4,22 @@ import (
 	"strings"
 )
 
-type SaveRepository[R result] interface {
+type SaveRepository interface {
 	QueryBuilder
-	Run(runner ...Runner) (R, error)
-	MustRun(runner ...Runner) R
+	Run(result any, runner ...Runner) error
+	MustRun(result any, runner ...Runner)
+	ForceInsert() SaveRepository
 }
 
-type saveRepository[E entity, R result] struct {
-	*repository[E, R]
+type saveRepository[E entity] struct {
+	*repository[E]
 	filters         []*filterBuilder
 	relationships   []*relationshipBuilder
 	selectors       []*selectorBuilder
 	temporaries     []*temporaryBuilder
 	values          []*valuesBuilder
 	primaryKeyValue any
+	forceInsert     bool
 }
 
 const (
@@ -25,7 +27,12 @@ const (
 	Update = "UPDATE"
 )
 
-func (r *saveRepository[E, R]) buildValues() map[string]any {
+func (r *saveRepository[E]) ForceInsert() SaveRepository {
+	r.forceInsert = true
+	return r
+}
+
+func (r *saveRepository[E]) buildValues() map[string]any {
 	values := make(map[string]any)
 	for _, vb := range r.values {
 		b := vb.Build()
@@ -36,7 +43,7 @@ func (r *saveRepository[E, R]) buildValues() map[string]any {
 	return values
 }
 
-func (r *saveRepository[E, R]) createFieldsValues(operation string, values *map[string]any, fields ...Field) {
+func (r *saveRepository[E]) createFieldsValues(operation string, values *map[string]any, fields ...Field) {
 	for _, item := range fields {
 		f := item.(*field)
 		if f.valueFactory == nil {
@@ -50,7 +57,7 @@ func (r *saveRepository[E, R]) createFieldsValues(operation string, values *map[
 	}
 }
 
-func (r *saveRepository[E, R]) Build() BuildResult {
+func (r *saveRepository[E]) Build() BuildResult {
 	e := any(r.entity).(entity)
 	fields := e.Fields()
 	values := r.buildValues()
@@ -62,7 +69,7 @@ func (r *saveRepository[E, R]) Build() BuildResult {
 	if ok {
 		r.primaryKeyValue = primaryKeyValue
 	}
-	if r.primaryKeyValue == nil {
+	if r.forceInsert || r.primaryKeyValue == nil {
 		r.createFieldsValues(Insert, &values, fields...)
 		return r.buildInsert(values)
 	}
@@ -71,30 +78,35 @@ func (r *saveRepository[E, R]) Build() BuildResult {
 	return r.buildUpdate(values)
 }
 
-func (r *saveRepository[E, R]) Run(runner ...Runner) (R, error) {
-	res := new(R)
+func (r *saveRepository[E]) Run(result any, runner ...Runner) error {
 	if r.db == nil {
-		return *res, ErrorMissingDatabase
+		return ErrorMissingDatabase
 	}
 	if len(runner) > 0 {
-		return *res, nil
+		return nil
 	}
 	b := r.Build()
-	if err := r.db.Q(b.Sql, b.Values).Exec(res); err != nil {
-		return *res, err
+	if result == nil {
+		if err := r.db.Q(b.Sql, b.Values).Exec(); err != nil {
+			return err
+		}
 	}
-	return *res, nil
+	if result != nil {
+		if err := r.db.Q(b.Sql, b.Values).Exec(result); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (r *saveRepository[E, R]) MustRun(runner ...Runner) R {
-	res, err := r.Run(runner...)
+func (r *saveRepository[E]) MustRun(result any, runner ...Runner) {
+	err := r.Run(result, runner...)
 	if err != nil {
 		panic(err)
 	}
-	return res
 }
 
-func (r *saveRepository[E, R]) buildWith() BuildResult {
+func (r *saveRepository[E]) buildWith() BuildResult {
 	sql := make([]string, len(r.temporaries))
 	values := make(map[string]any)
 	for i, t := range r.temporaries {
@@ -104,7 +116,7 @@ func (r *saveRepository[E, R]) buildWith() BuildResult {
 	return BuildResult{strings.Join(sql, ","), values}
 }
 
-func (r *saveRepository[E, R]) buildInsert(values map[string]any) BuildResult {
+func (r *saveRepository[E]) buildInsert(values map[string]any) BuildResult {
 	selectorsExist := len(r.selectors) > 0
 	temporariesExist := len(r.temporaries) > 0
 	e := any(r.entity).(entity)
@@ -117,18 +129,24 @@ func (r *saveRepository[E, R]) buildInsert(values map[string]any) BuildResult {
 			values[k] = v
 		}
 	}
+	var queryFields string
+	if !r.forceInsert {
+		queryFields = buildFieldsSqlWithoutPrimaryKey(fields...)
+	}
+	if r.forceInsert {
+		queryFields = buildFieldsSql(fields...)
+	}
 	q.Q("INSERT INTO " + e.Table()).
-		Q("AS " + e.Alias()).
-		Q("(" + buildFieldsSqlWithoutPrimaryKey(fields...) + ")").
-		Q("VALUES (" + createInsertSqlFromValues(fields, values) + ")")
+		Q("(" + queryFields + ")").
+		Q("VALUES (" + createInsertSqlFromValues(r.forceInsert, fields, values) + ")")
 	
 	q.If(!selectorsExist, "RETURNING *").
 		If(selectorsExist, "RETURNING "+buildFieldsSql(r.selectors...))
 	
-	return BuildResult{q.Build(), values}
+	return BuildResult{strings.ReplaceAll(q.Build(), e.Alias()+".", ""), values}
 }
 
-func (r *saveRepository[E, R]) buildUpdate(values map[string]any) BuildResult {
+func (r *saveRepository[E]) buildUpdate(values map[string]any) BuildResult {
 	selectorsExist := len(r.selectors) > 0
 	temporariesExist := len(r.temporaries) > 0
 	e := any(r.entity).(entity)
@@ -142,7 +160,6 @@ func (r *saveRepository[E, R]) buildUpdate(values map[string]any) BuildResult {
 		}
 	}
 	q.Q("UPDATE " + e.Table()).
-		Q("AS " + e.Alias()).
 		Q("SET " + createUpdateSqlFromValues(fields, values))
 	
 	// Where
@@ -151,10 +168,10 @@ func (r *saveRepository[E, R]) buildUpdate(values map[string]any) BuildResult {
 	q.If(!selectorsExist, "RETURNING *").
 		If(selectorsExist, "RETURNING "+buildFieldsSql(r.selectors...))
 	
-	return BuildResult{q.Build(), values}
+	return BuildResult{strings.ReplaceAll(q.Build(), e.Alias()+".", ""), values}
 }
 
-func (r *saveRepository[E, R]) appendPrimaryKeyFilterIfNecessary(primaryKeyField *field) {
+func (r *saveRepository[E]) appendPrimaryKeyFilterIfNecessary(primaryKeyField *field) {
 	for _, f := range r.filters {
 		for _, p := range f.parts {
 			if p.sql == primaryKeyField.prefix+"."+primaryKeyField.name {

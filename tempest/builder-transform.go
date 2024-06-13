@@ -1,17 +1,19 @@
 package tempest
 
 type TransformClass interface {
-	Transform(modifiers ...Modifier) Class
-	Rotate(size any, modifiers ...Modifier) Class
-	TranslateX(size any, modifiers ...Modifier) Class
-	TranslateY(size any, modifiers ...Modifier) Class
-	ScaleX(size any, modifiers ...Modifier) Class
-	ScaleY(size any, modifiers ...Modifier) Class
-	SkewX(size any, modifiers ...Modifier) Class
-	SkewY(size any, modifiers ...Modifier) Class
+	Transform(modifiers ...Modifier) Tempest
+	Rotate(size any, modifiers ...Modifier) Tempest
+	TranslateX(size any, modifiers ...Modifier) Tempest
+	TranslateY(size any, modifiers ...Modifier) Tempest
+	Scale(size any, modifiers ...Modifier) Tempest
+	ScaleX(size any, modifiers ...Modifier) Tempest
+	ScaleY(size any, modifiers ...Modifier) Tempest
+	SkewX(size any, modifiers ...Modifier) Tempest
+	SkewY(size any, modifiers ...Modifier) Tempest
+	Origin(position string, modifiers ...Modifier) Tempest
 }
 
-func (b *Builder) Transform(modifiers ...Modifier) Class {
+func (b *Builder) Transform(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "transform",
@@ -21,7 +23,7 @@ func (b *Builder) Transform(modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Rotate(size any, modifiers ...Modifier) Class {
+func (b *Builder) Rotate(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "rotate-",
@@ -33,7 +35,7 @@ func (b *Builder) Rotate(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) TranslateX(size any, modifiers ...Modifier) Class {
+func (b *Builder) TranslateX(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "translate-x-",
@@ -45,7 +47,7 @@ func (b *Builder) TranslateX(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) TranslateY(size any, modifiers ...Modifier) Class {
+func (b *Builder) TranslateY(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "translate-y-",
@@ -57,7 +59,7 @@ func (b *Builder) TranslateY(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Scale(size any, modifiers ...Modifier) Class {
+func (b *Builder) Scale(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "scale-",
@@ -68,7 +70,7 @@ func (b *Builder) Scale(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) ScaleX(size any, modifiers ...Modifier) Class {
+func (b *Builder) ScaleX(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "scale-x-",
@@ -79,7 +81,7 @@ func (b *Builder) ScaleX(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) ScaleY(size any, modifiers ...Modifier) Class {
+func (b *Builder) ScaleY(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "scale-y-",
@@ -90,7 +92,7 @@ func (b *Builder) ScaleY(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) SkewX(size any, modifiers ...Modifier) Class {
+func (b *Builder) SkewX(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "skew-x-",
@@ -102,13 +104,24 @@ func (b *Builder) SkewX(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) SkewY(size any, modifiers ...Modifier) Class {
+func (b *Builder) SkewY(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "skew-y-",
 			value:     size,
 			unit:      Deg,
 			fn:        transformSkewYAxisClass,
+			modifiers: modifiers,
+		},
+	)
+}
+
+func (b *Builder) Origin(position string, modifiers ...Modifier) Tempest {
+	return b.createStyle(
+		style{
+			prefix:    "origin-",
+			value:     position,
+			fn:        transformOriginClass,
 			modifiers: modifiers,
 		},
 	)

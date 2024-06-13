@@ -3,6 +3,7 @@ package mirage
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	
 	"github.com/daarlabs/arcanum/util/constant/contentType"
 	"github.com/daarlabs/arcanum/util/constant/dataType"
@@ -60,25 +61,21 @@ func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 
 func (h handler) applyInternalMiddlewares(matchedRoute *Route, middlewares []Handler) []Handler {
 	r := make([]Handler, 0)
+	r = append(r, createFormMiddleware())
 	if h.core.config.Localization.Enabled {
 		r = append(r, createLangMiddleware())
 	}
 	if h.core.config.Security.Csrf != nil {
 		r = append(r, createCsrfMiddleware())
 	}
-	if matchedRoute != nil && len(matchedRoute.Firewalls) > 0 {
-		r = append(r, createFirewallMiddleware(matchedRoute.Firewalls))
+	if matchedRoute != nil && len(matchedRoute.Firewall) > 0 {
+		r = append(r, createFirewallMiddleware(matchedRoute.Firewall))
 	}
 	r = append(r, middlewares...)
 	return r
 }
 
 func (h handler) createResponse(c *ctx) {
-	defer func(c *ctx) {
-		if c.tempest != nil && c.tempest.Updated {
-			c.tempest.Tempest.Build()
-		}
-	}(c)
 	if c.response.DataType != dataType.Asset {
 		c.w.Header().Set(header.CacheControl, "no-cache, no-store, must-revalidate")
 	}
@@ -139,6 +136,9 @@ func (h handler) createRecover(c *ctx) {
 }
 
 func (h handler) matchRoute(path string) *Route {
+	if strings.HasPrefix(path, tempestAssetsPath) {
+		return nil
+	}
 	for _, r := range *h.core.router.routes {
 		if r.Matcher.MatchString(path) {
 			return r

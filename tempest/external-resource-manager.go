@@ -9,14 +9,12 @@ import (
 )
 
 type externalResourceManager struct {
-	config  Config
 	styles  [][]byte
 	scripts [][]byte
 }
 
-func createExternalResourceManager(config Config) *externalResourceManager {
+func createExternalResourceManager() *externalResourceManager {
 	m := &externalResourceManager{
-		config:  config,
 		styles:  make([][]byte, 0),
 		scripts: make([][]byte, 0),
 	}
@@ -28,7 +26,7 @@ func (m *externalResourceManager) run() error {
 	readScripts := make([]string, 0)
 	fetchStyles := make([]string, 0)
 	fetchScripts := make([]string, 0)
-	for _, styleFile := range m.config.Styles {
+	for _, styleFile := range GlobalConfig.Styles {
 		isHttp := strings.HasPrefix(styleFile, "http")
 		if !isHttp {
 			readStyles = append(readStyles, styleFile)
@@ -37,7 +35,7 @@ func (m *externalResourceManager) run() error {
 			fetchStyles = append(fetchStyles, styleFile)
 		}
 	}
-	for _, scriptFile := range m.config.Scripts {
+	for _, scriptFile := range GlobalConfig.Scripts {
 		isHttp := strings.HasPrefix(scriptFile, "http")
 		if !isHttp {
 			readScripts = append(readScripts, scriptFile)

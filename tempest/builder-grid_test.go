@@ -14,7 +14,7 @@ func TestGridBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				gridTemplateColumnsClass(".grid-cols-3", "3", false),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -25,7 +25,7 @@ func TestGridBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				gridTemplateColumnsClass(".grid-cols-1fr_1fr_1fr", "1fr 1fr 1fr", true),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -36,7 +36,7 @@ func TestGridBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				orderClass(".order-1", "1"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

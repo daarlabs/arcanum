@@ -44,9 +44,17 @@ func textAlignClass(selector string, value string) string {
 
 func textDecorationClass(selector string, value string) string {
 	return fmt.Sprintf(
-		`%s{text-decoration: %s;}`,
+		`%s{text-decoration-line: %s;}`,
 		selector,
 		value,
+	)
+}
+
+func lineHeightClass(selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{line-height: %s;}`,
+		selector,
+		transformLineHeightKeyword(value),
 	)
 }
 
@@ -55,4 +63,17 @@ func truncateClass(selector string, _ string) string {
 		`%s{overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}`,
 		selector,
 	)
+}
+
+func transformLineHeightKeyword(keyword string) string {
+	if keyword == "none" {
+		return "1"
+	}
+	if keyword == "relax" {
+		return "1.5"
+	}
+	if keyword == "loose" {
+		return "2"
+	}
+	return keyword
 }

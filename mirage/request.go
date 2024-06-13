@@ -10,6 +10,7 @@ import (
 )
 
 type Request interface {
+	Action() string
 	ContentType() string
 	Form() url.Values
 	Header() http.Header
@@ -33,7 +34,8 @@ type RequestIs interface {
 	Put() bool
 	Patch() bool
 	Delete() bool
-	Action() bool
+	Action(actionName ...string) bool
+	Active(routeName string) bool
 	Hx() bool
 	Options() bool
 	Head() bool
@@ -42,8 +44,19 @@ type RequestIs interface {
 }
 
 type request struct {
-	r     *http.Request
-	route *Route
+	r            *http.Request
+	componentCtx *componentCtx
+	route        *Route
+}
+
+type requestIs struct {
+	r            *http.Request
+	componentCtx *componentCtx
+	route        *Route
+}
+
+func (r request) Action() string {
+	return r.r.URL.Query().Get(Action)
 }
 
 func (r request) ContentType() string {
@@ -67,7 +80,11 @@ func (r request) Ip() string {
 }
 
 func (r request) Is() RequestIs {
-	return r
+	return requestIs{
+		r:            r.r,
+		componentCtx: r.componentCtx,
+		route:        r.route,
+	}
 }
 
 func (r request) Method() string {
@@ -75,6 +92,9 @@ func (r request) Method() string {
 }
 
 func (r request) Name() string {
+	if r.route == nil {
+		return ""
+	}
 	return r.route.Name
 }
 
@@ -117,46 +137,63 @@ func (r request) UserAgent() string {
 	return r.r.Header.Get(header.UserAgent)
 }
 
-func (r request) Get() bool {
+func (r requestIs) Get() bool {
 	return r.r.Method == http.MethodGet
 }
 
-func (r request) Post() bool {
+func (r requestIs) Post() bool {
 	return r.r.Method == http.MethodPost
 }
 
-func (r request) Put() bool {
+func (r requestIs) Put() bool {
 	return r.r.Method == http.MethodPut
 }
 
-func (r request) Patch() bool {
+func (r requestIs) Patch() bool {
 	return r.r.Method == http.MethodPatch
 }
 
-func (r request) Delete() bool {
+func (r requestIs) Delete() bool {
 	return r.r.Method == http.MethodDelete
 }
 
-func (r request) Action() bool {
-	return len(r.r.URL.Query().Get(Action)) > 0
+func (r requestIs) Active(routeName string) bool {
+	return r.route.Name == routeName
 }
 
-func (r request) Hx() bool {
+func (r requestIs) Action(actionName ...string) bool {
+	action := r.r.URL.Query().Get(Action)
+	isAction := len(action) > 0
+	if isAction && len(actionName) > 0 && r.componentCtx != nil {
+		actionPrefix := r.route.Name + "_" + r.componentCtx.name
+		var equal bool
+		for _, an := range actionName {
+			if actionPrefix+"_"+an == action {
+				equal = true
+				break
+			}
+		}
+		return equal
+	}
+	return isAction
+}
+
+func (r requestIs) Hx() bool {
 	return r.r.Header.Get(hx.RequestHeaderRequest) == "true"
 }
 
-func (r request) Options() bool {
+func (r requestIs) Options() bool {
 	return r.r.Method == http.MethodOptions
 }
 
-func (r request) Head() bool {
+func (r requestIs) Head() bool {
 	return r.r.Method == http.MethodHead
 }
 
-func (r request) Connect() bool {
+func (r requestIs) Connect() bool {
 	return r.r.Method == http.MethodConnect
 }
 
-func (r request) Trace() bool {
+func (r requestIs) Trace() bool {
 	return r.r.Method == http.MethodTrace
 }

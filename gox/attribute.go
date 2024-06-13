@@ -20,7 +20,7 @@ const (
 	attributeAutoFocus       = "autofocus"
 	attributeAutoPlay        = "autoplay"
 	attributeBackground      = "background"
-	attributeBgColor         = "bgcolor"
+	attributeBg              = "bgcolor"
 	attributeBorder          = "border"
 	attributeBuffered        = "buffered"
 	attributeCapture         = "capture"
@@ -172,8 +172,8 @@ func Background(values ...string) Node {
 	return createAttribute(attributeBackground, values...)
 }
 
-func BgColor(values ...string) Node {
-	return createAttribute(attributeBgColor, values...)
+func Bg(values ...string) Node {
+	return createAttribute(attributeBg, values...)
 }
 
 func Border(values ...string) Node {

@@ -1,14 +1,15 @@
 package tempest
 
 type DisplayClass interface {
-	Block(modifiers ...Modifier) Class
-	Flex(modifiers ...Modifier) Class
-	Grid(modifiers ...Modifier) Class
-	Inline(modifiers ...Modifier) Class
-	InlineBlock(modifiers ...Modifier) Class
+	Block(modifiers ...Modifier) Tempest
+	Flex(modifiers ...Modifier) Tempest
+	Grid(modifiers ...Modifier) Tempest
+	Inline(modifiers ...Modifier) Tempest
+	InlineFlex(modifiers ...Modifier) Tempest
+	InlineBlock(modifiers ...Modifier) Tempest
 }
 
-func (b *Builder) Block(modifiers ...Modifier) Class {
+func (b *Builder) Block(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "block",
@@ -19,7 +20,7 @@ func (b *Builder) Block(modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Flex(modifiers ...Modifier) Class {
+func (b *Builder) Flex(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "flex",
@@ -30,7 +31,7 @@ func (b *Builder) Flex(modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Grid(modifiers ...Modifier) Class {
+func (b *Builder) Grid(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "grid",
@@ -41,7 +42,7 @@ func (b *Builder) Grid(modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Inline(modifiers ...Modifier) Class {
+func (b *Builder) Inline(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "inline",
@@ -52,7 +53,18 @@ func (b *Builder) Inline(modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) InlineBlock(modifiers ...Modifier) Class {
+func (b *Builder) InlineFlex(modifiers ...Modifier) Tempest {
+	return b.createStyle(
+		style{
+			prefix:    "inline-flex",
+			value:     "inline-flex",
+			fn:        displayClass,
+			modifiers: modifiers,
+		},
+	)
+}
+
+func (b *Builder) InlineBlock(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "inline-block",

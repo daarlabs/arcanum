@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"time"
@@ -346,7 +347,8 @@ func (u *userManager) args() []quirk.Map {
 	result := u.data
 	vectors := make([]any, 0)
 	for name, v := range u.data {
-		if name == UserPassword {
+		kind := reflect.TypeOf(v).Kind()
+		if name == UserPassword || kind == reflect.Bool {
 			continue
 		}
 		vectors = append(vectors, v)

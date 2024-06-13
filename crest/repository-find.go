@@ -1,24 +1,20 @@
 package crest
 
-import (
-	"reflect"
-)
-
-type FindRepository[R result] interface {
+type FindRepository interface {
 	QueryBuilder
-	Run(runner ...Runner) (R, error)
-	MustRun(runner ...Runner) R
+	Run(result any, runner ...Runner) error
+	MustRun(result any, runner ...Runner)
 }
 
-type findRepository[E entity, R result] struct {
-	*repository[E, R]
+type findRepository[E entity] struct {
+	*repository[E]
 	filters       []*filterBuilder
 	relationships []*relationshipBuilder
 	selectors     []*selectorBuilder
 	shapes        []*shapeBuilder
 }
 
-func (r *findRepository[E, R]) Build() BuildResult {
+func (r *findRepository[E]) Build() BuildResult {
 	var fieldsSql string
 	values := make(map[string]any)
 	e := any(r.entity).(entity)
@@ -57,36 +53,30 @@ func (r *findRepository[E, R]) Build() BuildResult {
 	return BuildResult{q.Build(), values}
 }
 
-func (r *findRepository[E, R]) Run(runner ...Runner) (R, error) {
-	res := new(R)
-	t := reflect.TypeOf(res)
-	if t.Elem().Kind() == reflect.Slice {
-		slicePtr := reflect.New(t.Elem())
-		slicePtr.Elem().Set(reflect.MakeSlice(t.Elem(), 0, 0))
-		*res = slicePtr.Elem().Interface().(R)
-	}
-	if t.Elem().Kind() == reflect.Map {
-		mapPtr := reflect.New(t.Elem())
-		mapPtr.Elem().Set(reflect.MakeMap(t.Elem()))
-		*res = mapPtr.Elem().Interface().(R)
-	}
+func (r *findRepository[E]) Run(result any, runner ...Runner) error {
 	if r.db == nil {
-		return *res, ErrorMissingDatabase
+		return ErrorMissingDatabase
 	}
 	if len(runner) > 0 {
-		return *res, nil
+		return nil
 	}
 	b := r.Build()
-	if err := r.db.Q(b.Sql, b.Values).Exec(res); err != nil {
-		return *res, err
+	if result == nil {
+		if err := r.db.Q(b.Sql, b.Values).Exec(); err != nil {
+			return err
+		}
 	}
-	return *res, nil
+	if result != nil {
+		if err := r.db.Q(b.Sql, b.Values).Exec(result); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (r *findRepository[E, R]) MustRun(runner ...Runner) R {
-	res, err := r.Run(runner...)
+func (r *findRepository[E]) MustRun(result any, runner ...Runner) {
+	err := r.Run(result, runner...)
 	if err != nil {
 		panic(err)
 	}
-	return res
 }

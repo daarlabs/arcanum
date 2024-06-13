@@ -14,7 +14,7 @@ func TestTransitionBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				transitionClass(".transition", ""),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -25,7 +25,7 @@ func TestTransitionBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				transitionClass(applySelectorModifiers("transition", Dark(), Hover()), ""),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

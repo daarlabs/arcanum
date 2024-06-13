@@ -1,18 +1,18 @@
 package crest
 
-type RemoveRepository[R result] interface {
+type RemoveRepository interface {
 	QueryBuilder
-	Run(runner ...Runner) (R, error)
-	MustRun(runner ...Runner) R
+	Run(result any, runner ...Runner) error
+	MustRun(result any, runner ...Runner)
 }
 
-type removeRepository[E entity, R result] struct {
-	*repository[E, R]
+type removeRepository[E entity] struct {
+	*repository[E]
 	filters   []*filterBuilder
 	selectors []*selectorBuilder
 }
 
-func (r *removeRepository[E, R]) Build() BuildResult {
+func (r *removeRepository[E]) Build() BuildResult {
 	values := make(map[string]any)
 	selectorsExist := len(r.selectors) > 0
 	e := any(r.entity).(entity)
@@ -30,25 +30,30 @@ func (r *removeRepository[E, R]) Build() BuildResult {
 	return BuildResult{q.Build(), values}
 }
 
-func (r *removeRepository[E, R]) Run(runner ...Runner) (R, error) {
-	res := new(R)
+func (r *removeRepository[E]) Run(result any, runner ...Runner) error {
 	if r.db == nil {
-		return *res, ErrorMissingDatabase
+		return ErrorMissingDatabase
 	}
 	if len(runner) > 0 {
-		return *res, nil
+		return nil
 	}
 	b := r.Build()
-	if err := r.db.Q(b.Sql, b.Values).Exec(res); err != nil {
-		return *res, err
+	if result == nil {
+		if err := r.db.Q(b.Sql, b.Values).Exec(); err != nil {
+			return err
+		}
 	}
-	return *res, nil
+	if result != nil {
+		if err := r.db.Q(b.Sql, b.Values).Exec(result); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (r *removeRepository[E, R]) MustRun(runner ...Runner) R {
-	res, err := r.Run(runner...)
+func (r *removeRepository[E]) MustRun(result any, runner ...Runner) {
+	err := r.Run(result, runner...)
 	if err != nil {
 		panic(err)
 	}
-	return res
 }

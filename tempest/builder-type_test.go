@@ -10,22 +10,22 @@ func TestTypeBuilder(t *testing.T) {
 	t.Run(
 		"standardized", func(t *testing.T) {
 			c := New(Config{}).Context()
-			class := c.Class().FontSize(SizeLg).String()
+			class := c.Class().TextSize(SizeLg).String()
 			assert.Equal(
 				t,
 				fontSizeClass(".font-lg", SizeLg),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
 	t.Run(
 		"custom", func(t *testing.T) {
 			c := New(Config{}).Context()
-			class := c.Class().FontSize("14px").String()
+			class := c.Class().TextSize("14px").String()
 			assert.Equal(
 				t,
 				fontSizeClass(`.font-14px`, "14px"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -36,7 +36,7 @@ func TestTypeBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				fontWeightClass(`.font-bold`, "700"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

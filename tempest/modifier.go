@@ -13,7 +13,7 @@ type Modifier struct {
 type modifiers struct {
 	dark         bool
 	placeholder  bool
-	opacity      int
+	opacity      float64
 	useOpacity   bool
 	hover        bool
 	checked      bool
@@ -50,7 +50,7 @@ func Placeholder() Modifier {
 	return Modifier{Name: placeholderModifier}
 }
 
-func Opacity(opacity int) Modifier {
+func Opacity(opacity float64) Modifier {
 	return Modifier{Name: opacityModifier, Value: opacity}
 }
 
@@ -146,7 +146,7 @@ func processModifiers(items ...Modifier) modifiers {
 		case placeholderModifier:
 			r.placeholder = true
 		case opacityModifier:
-			r.opacity = item.Value.(int)
+			r.opacity = item.Value.(float64)
 			r.useOpacity = true
 		case breakpointModifier:
 			r.breakpoint = item.Value.(string)
@@ -202,40 +202,44 @@ func applyClassModifiers(class string, modifiers ...Modifier) string {
 	parts = append(parts, class)
 	r := strings.Join(parts, ":")
 	if m.useOpacity {
-		r += fmt.Sprintf("/%d", m.opacity)
+		r += fmt.Sprintf("/%s", createOpacitySuffix(m.opacity))
 	}
 	return r
+}
+
+func createOpacitySuffix(opacity float64) string {
+	if opacity < 1 {
+		opacity = opacity * 100
+	}
+	return createMostSuitableNumber(opacity)
 }
 
 func applySelectorModifiers(selector string, modifiers ...Modifier) string {
 	var result string
 	m := processModifiers(modifiers...)
 	if m.peerHover {
-		result += ".peer:hover"
+		result += ".peer:hover ~ "
 	}
 	if m.peerChecked {
-		result += ".peer:checked"
+		result += ".peer:checked ~ "
 	}
 	if m.peerFocus {
-		result += ".peer:focus"
+		result += ".peer:focus ~ "
 	}
 	if m.groupHover {
-		result += ".group:hover"
+		result += ".group:hover > "
 	}
 	if m.groupChecked {
-		result += ".group:checked"
+		result += ".group:checked > "
 	}
 	if m.groupFocus {
-		result += ".group:focus"
-	}
-	if len(result) > 0 {
-		result += " "
+		result += ".group:focus > "
 	}
 	parts := createModifiersParts(m)
 	parts = append(parts, selector)
 	result += "." + strings.Join(parts, `\:`)
 	if m.useOpacity {
-		result += fmt.Sprintf(`\/%d`, m.opacity)
+		result += fmt.Sprintf(`\/%s`, createOpacitySuffix(m.opacity))
 	}
 	if m.hover {
 		result += ":hover"

@@ -110,7 +110,7 @@ func FontFamily(value ...any) gox.Node {
 	return gox.CreateAttribute[any]("font-family")(value...)
 }
 
-func FontSize(value ...any) gox.Node {
+func TextSize(value ...any) gox.Node {
 	return gox.CreateAttribute[any]("font-size")(value...)
 }
 
@@ -146,7 +146,7 @@ func IcoFontFamily(value ...string) gox.Node {
 	return gox.CreateAttribute[string]("ico-font-family")(value...)
 }
 
-func IcoFontSize(value ...string) gox.Node {
+func IcoTextSize(value ...string) gox.Node {
 	return gox.CreateAttribute[string]("ico-font-size")(value...)
 }
 

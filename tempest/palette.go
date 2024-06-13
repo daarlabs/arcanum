@@ -7,32 +7,44 @@ type RGB struct {
 }
 
 const (
-	Slate   = "slate"
-	Gray    = "gray"
-	Zinc    = "zinc"
-	Neutral = "neutral"
-	Stone   = "stone"
-	Amber   = "amber"
-	Red     = "red"
-	Orange  = "orange"
-	Yellow  = "yellow"
-	Lime    = "lime"
-	Green   = "green"
-	Emerald = "emerald"
-	Teal    = "teal"
-	Cyan    = "cyan"
-	Sky     = "sky"
-	Blue    = "blue"
-	Indigo  = "indigo"
-	Violet  = "violet"
-	Purple  = "purple"
-	Fuchsia = "fuchsia"
-	Pink    = "pink"
-	Rose    = "rose"
+	Transparent = "transparent"
+	Black       = "black"
+	White       = "white"
+	Slate       = "slate"
+	Gray        = "gray"
+	Zinc        = "zinc"
+	Neutral     = "neutral"
+	Stone       = "stone"
+	Amber       = "amber"
+	Red         = "red"
+	Orange      = "orange"
+	Yellow      = "yellow"
+	Lime        = "lime"
+	Green       = "green"
+	Emerald     = "emerald"
+	Teal        = "teal"
+	Cyan        = "cyan"
+	Sky         = "sky"
+	Blue        = "blue"
+	Indigo      = "indigo"
+	Violet      = "violet"
+	Purple      = "purple"
+	Fuchsia     = "fuchsia"
+	Pink        = "pink"
+	Rose        = "rose"
 )
 
 var (
 	Pallete = map[string]Color{
+		Transparent: {
+			0: "transparent",
+		},
+		Black: {
+			0: "#000000",
+		},
+		White: {
+			0: "#ffffff",
+		},
 		Slate: {
 			50:  "#f8fafc",
 			100: "#f1f5f9",

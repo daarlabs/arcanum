@@ -14,7 +14,7 @@ func TestSpacingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				paddingClass(".p-4", "1rem"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -25,7 +25,7 @@ func TestSpacingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				paddingClass(".-p-4", "-1rem"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -36,7 +36,7 @@ func TestSpacingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				paddingClass(`.p-1px`, "1px"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -47,7 +47,7 @@ func TestSpacingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				paddingClass(applySelectorModifiers("p-4", Dark()), "1rem"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -62,7 +62,7 @@ func TestSpacingBuilder(t *testing.T) {
 					applySelectorModifiers(paddingClass("p-4", "1rem"), Xs()),
 					Xs(),
 				),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -76,7 +76,7 @@ func TestSpacingBuilder(t *testing.T) {
 					DefaultBreakpoints,
 					paddingClass(applySelectorModifiers("p-4", Dark(), Lg()), "1rem"), Lg(),
 				),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

@@ -9,12 +9,13 @@ import (
 	"github.com/daarlabs/arcanum/config"
 )
 
-type Creampuff interface {
+type Mirage interface {
 	Router
-	ErrorHandler(handler Handler) Creampuff
-	Layout() Layout
+	ErrorHandler(handler Handler) Mirage
+	Layout() LayoutManager
 	Run(address string)
 	Mux() *http.ServeMux
+	Plugin(plugin Plugin) Mirage
 }
 
 type core struct {
@@ -24,6 +25,7 @@ type core struct {
 	errorHandler Handler
 	layout       *layout
 	mux          *http.ServeMux
+	plugins      []Plugin
 	routes       []*Route
 }
 
@@ -42,7 +44,8 @@ const (
 	Version = "0.1.0"
 )
 
-func New(cfg config.Config) Creampuff {
+func New(cfg config.Config) Mirage {
+	cfg = cfg.Init()
 	mux := http.NewServeMux()
 	rts := make([]*Route, 0)
 	c := &core{
@@ -51,6 +54,7 @@ func New(cfg config.Config) Creampuff {
 		layout:       createLayout(),
 		mux:          mux,
 		routes:       rts,
+		plugins:      make([]Plugin, 0),
 	}
 	c.assets = createAssets(cfg)
 	c.router = &router{
@@ -67,12 +71,12 @@ func New(cfg config.Config) Creampuff {
 	return c
 }
 
-func (c *core) ErrorHandler(handler Handler) Creampuff {
+func (c *core) ErrorHandler(handler Handler) Mirage {
 	c.errorHandler = handler
 	return c
 }
 
-func (c *core) Layout() Layout {
+func (c *core) Layout() LayoutManager {
 	return c.layout
 }
 
@@ -85,11 +89,27 @@ func (c *core) Run(address string) {
 	fmt.Println("Name: ", c.config.App.Name)
 	fmt.Println("Address: ", address)
 	fmt.Println("Version: ", Version)
+	for _, p := range c.plugins {
+		if len(p.Name) == 0 {
+			continue
+		}
+		fmt.Println("Plugin loaded: ", p.Name)
+	}
 	log.Fatalln(http.ListenAndServe(address, c.mux))
 }
 
 func (c *core) Mux() *http.ServeMux {
 	return c.mux
+}
+
+func (c *core) Plugin(plugin Plugin) Mirage {
+	c.plugins = append(c.plugins, plugin)
+	if c.config.Localization.Translator != nil {
+		for langCode, locales := range plugin.Locales {
+			c.config.Localization.Translator.Extend(langCode, locales)
+		}
+	}
+	return c
 }
 
 func (c *core) onInit() {

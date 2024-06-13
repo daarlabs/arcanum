@@ -10,7 +10,7 @@ func TestRelationshipBuilder(t *testing.T) {
 	// te := Entity[testEntity]()
 	t.Run(
 		"default join", func(t *testing.T) {
-			r := Repository[chapterEntity, []chapterModel](nil).Find()
+			r := Repository[chapterEntity](nil).Find()
 			assert.Equal(
 				t,
 				`SELECT ch.id,ch.book_id FROM chapters AS ch LEFT JOIN books AS b ON b.id = ch.book_id`,
@@ -20,7 +20,7 @@ func TestRelationshipBuilder(t *testing.T) {
 	)
 	t.Run(
 		"override join", func(t *testing.T) {
-			r := Repository[chapterEntity, []chapterModel](nil).Find(
+			r := Repository[chapterEntity](nil).Find(
 				Relationship(be.Id()).Intersect(),
 			)
 			assert.Equal(

@@ -14,6 +14,7 @@ import (
 
 type Translator interface {
 	Translate(langCode, key string, args ...map[string]any) string
+	Extend(langCode string, locales map[string]string) Translator
 }
 
 type translator struct {
@@ -41,6 +42,17 @@ func New(config Config) Translator {
 	err := t.walk()
 	if err != nil {
 		panic(err)
+	}
+	return t
+}
+
+func (t *translator) Extend(langCode string, locales map[string]string) Translator {
+	langTranslates, ok := t.translates[langCode]
+	if !ok {
+		t.translates[langCode] = make(map[string]string)
+	}
+	for k, v := range locales {
+		langTranslates[k] = v
 	}
 	return t
 }

@@ -3,6 +3,7 @@ package mirage
 import "net/http"
 
 type Map map[string]any
+type Slice []Map
 
 const (
 	Action = "action"

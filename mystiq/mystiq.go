@@ -123,7 +123,8 @@ func (m *mystiq) MustGetMany(name string, v any, t any) {
 
 func (m *mystiq) getAllWithDb(param Param, t any) error {
 	q := m.db.Q("SELECT " + m.createFields()).
-		Q(`FROM ` + m.query.Table)
+		Q(`FROM ` + m.query.Table).
+		Q(`AS ` + m.query.Alias)
 	param.Use(q)
 	return q.Exec(t)
 }
@@ -273,7 +274,7 @@ func (m *mystiq) shouldUseDb() bool {
 
 func (m *mystiq) createFields() string {
 	fields := make([]string, 0)
-	for key, alias := range m.query.Fields {
+	for alias, key := range m.query.Fields {
 		fields = append(fields, key+" AS "+alias)
 	}
 	return strings.Join(fields, ", ")

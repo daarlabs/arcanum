@@ -3,10 +3,10 @@ package mystiq
 type Query struct {
 	Table  string
 	Fields map[string]string
-	Name   string
+	Value  string
 	Alias  string
 }
 
 func (q Query) CanUse() bool {
-	return q.Table != "" && q.Name != "" && q.Alias != "" && len(q.Fields) > 0
+	return q.Table != "" && q.Value != "" && q.Alias != "" && len(q.Fields) > 0
 }

@@ -13,9 +13,18 @@ type Field interface {
 	Type(dataType string) Field
 	Unique(unique ...bool) Field
 	Relationship(relationship Field) Field
-	ValueFactory(fn func(operation string, values Map) Value) Field
+	CreateValue(fn func(operation string, values Map) Value) Field
 	Name() string
 	TsVector() Field
+	Serial() Field
+	Bool() Field
+	Char(n int) Field
+	Varchar(n int) Field
+	Jsonb() Field
+	Int() Field
+	Float() Field
+	Timestamp() Field
+	Timestampz() Field
 }
 
 type field struct {
@@ -32,11 +41,15 @@ type field struct {
 	valueFactory func(operation string, values Map) Value
 }
 
+const (
+	Id = "id"
+)
+
 func (f *field) Name() string {
 	return f.name
 }
 
-func (f *field) ValueFactory(fn func(operation string, values Map) Value) Field {
+func (f *field) CreateValue(fn func(operation string, values Map) Value) Field {
 	f.valueFactory = fn
 	return f
 }
@@ -88,6 +101,51 @@ func (f *field) Relationship(relationship Field) Field {
 
 func (f *field) Type(dataType string) Field {
 	f.dataType = dataType
+	return f
+}
+
+func (f *field) Serial() Field {
+	f.Type("SERIAL")
+	return f
+}
+
+func (f *field) Bool() Field {
+	f.Type("BOOL")
+	return f
+}
+
+func (f *field) Char(n int) Field {
+	f.Type(fmt.Sprintf("CHAR(%d)", n))
+	return f
+}
+
+func (f *field) Varchar(n int) Field {
+	f.Type(fmt.Sprintf("VARCHAR(%d)", n))
+	return f
+}
+
+func (f *field) Int() Field {
+	f.Type("INT")
+	return f
+}
+
+func (f *field) Float() Field {
+	f.Type("FLOAT")
+	return f
+}
+
+func (f *field) Jsonb() Field {
+	f.Type("JSONB")
+	return f
+}
+
+func (f *field) Timestamp() Field {
+	f.Type("TIMESTAMP")
+	return f
+}
+
+func (f *field) Timestampz() Field {
+	f.Type("TIMESTAMPZ")
 	return f
 }
 

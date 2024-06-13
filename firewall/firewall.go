@@ -3,6 +3,8 @@ package firewall
 import (
 	"regexp"
 	"strings"
+	
+	"github.com/daarlabs/arcanum/auth"
 )
 
 type Firewall struct {
@@ -12,12 +14,12 @@ type Firewall struct {
 	Matchers []*regexp.Regexp
 	Paths    []string
 	Redirect string
-	Roles    []Role
+	Roles    []auth.Role
 	Secret   string
 }
 
 type Attempt struct {
-	Roles  []Role
+	Roles  []auth.Role
 	Secret string
 }
 
@@ -32,7 +34,7 @@ func New(configs ...Config) *Firewall {
 		Groups:   make([]string, 0),
 		Matchers: make([]*regexp.Regexp, 0),
 		Paths:    make([]string, 0),
-		Roles:    make([]Role, 0),
+		Roles:    make([]auth.Role, 0),
 	}
 	for _, item := range configs {
 		c, ok := item.(*config)
@@ -53,7 +55,7 @@ func New(configs ...Config) *Firewall {
 		case configRedirect:
 			f.Redirect = c.value.(string)
 		case configRole:
-			f.Roles = append(f.Roles, c.value.([]Role)...)
+			f.Roles = append(f.Roles, c.value.([]auth.Role)...)
 		case configSecret:
 			f.Secret = c.value.(string)
 		}
@@ -84,8 +86,8 @@ func (f *Firewall) Try(attempt Attempt) Result {
 }
 
 func (f *Firewall) Match(path string) bool {
-	for _, item := range f.Matchers {
-		if item.MatchString(path) {
+	for _, matcher := range f.Matchers {
+		if matcher.MatchString(path) {
 			return true
 		}
 	}
@@ -93,8 +95,8 @@ func (f *Firewall) Match(path string) bool {
 }
 
 func (f *Firewall) MatchPath(path string) bool {
-	for _, item := range f.Paths {
-		if strings.HasPrefix(item, path) {
+	for _, firewallPath := range f.Paths {
+		if len(path) > 0 && strings.HasPrefix(firewallPath, path) {
 			return true
 		}
 	}
@@ -102,8 +104,8 @@ func (f *Firewall) MatchPath(path string) bool {
 }
 
 func (f *Firewall) MatchGroup(group string) bool {
-	for _, item := range f.Groups {
-		if strings.HasPrefix(item, group) {
+	for _, firewallGroup := range f.Groups {
+		if len(group) > 0 && strings.HasPrefix(firewallGroup, group) {
 			return true
 		}
 	}

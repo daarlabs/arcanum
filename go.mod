@@ -5,7 +5,6 @@ go 1.22
 require (
 	github.com/Boostport/mjml-go v0.14.6
 	github.com/BurntSushi/toml v1.3.2
-	github.com/andybalholm/brotli v1.1.0
 	github.com/charmbracelet/lipgloss v0.11.0
 	github.com/dchest/uniuri v1.2.0
 	github.com/go-redis/redis/v8 v8.11.5
@@ -24,6 +23,7 @@ require (
 )
 
 require (
+	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

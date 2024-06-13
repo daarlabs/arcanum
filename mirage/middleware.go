@@ -4,7 +4,9 @@ import (
 	"errors"
 	"net/http"
 	"slices"
+	"strings"
 	
+	"github.com/daarlabs/arcanum/auth"
 	"github.com/daarlabs/arcanum/firewall"
 	"github.com/daarlabs/arcanum/form"
 )
@@ -39,10 +41,26 @@ func createLangMiddleware() Handler {
 	}
 }
 
+func createFormMiddleware() Handler {
+	return func(c Ctx) error {
+		if c.Request().Is().Get() {
+			return c.Continue()
+		}
+		if _, err := form.ParseForm(c.Request().Raw(), c.Config().Form.Limit); err != nil {
+			return c.Response().Error(err)
+		}
+		return c.Continue()
+	}
+}
+
 func createCsrfMiddleware() Handler {
 	return func(c Ctx) error {
 		if c.Request().Is().Get() {
 			if c.Request().Is().Action() {
+				return c.Continue()
+			}
+			path := c.Request().Path()
+			if strings.HasPrefix(path, tempestAssetsPath) || strings.HasPrefix(path, c.Config().App.Public) {
 				return c.Continue()
 			}
 			if err := c.Csrf().Clean(c.Request().Name()); err != nil {
@@ -91,11 +109,11 @@ func createFirewallMiddleware(firewalls []firewall.Firewall) Handler {
 		secret := c.Request().Header().Get("secret")
 		if !session.Super {
 			for i, f := range firewalls {
-				sessionRoles := make([]firewall.Role, 0)
+				sessionRoles := make([]auth.Role, 0)
 				for _, sr := range session.Roles {
 					for _, fr := range f.Roles {
 						if slices.ContainsFunc(
-							sessionRoles, func(r firewall.Role) bool {
+							sessionRoles, func(r auth.Role) bool {
 								return r.Name == fr.Name
 							},
 						) {
@@ -115,7 +133,7 @@ func createFirewallMiddleware(firewalls []firewall.Firewall) Handler {
 				)
 			}
 		}
-		var allowed bool
+		allowed := session.Super
 		var redirect string
 		for _, r := range results {
 			if r.Ok {
@@ -123,7 +141,7 @@ func createFirewallMiddleware(firewalls []firewall.Firewall) Handler {
 				continue
 			}
 			if len(r.Redirect) > 0 {
-				redirect = r.Redirect
+				redirect = c.Generate().Link(r.Redirect)
 			}
 			if r.Err != nil {
 				err = r.Err

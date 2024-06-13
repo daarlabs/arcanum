@@ -1,15 +1,17 @@
 package tempest
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type GridClass interface {
-	GridCols(size any, modifiers ...Modifier) Class
-	GridRows(size any, modifiers ...Modifier) Class
-	Gap(size any, modifiers ...Modifier) Class
-	Order(index int, modifiers ...Modifier) Class
+	GridCols(size any, modifiers ...Modifier) Tempest
+	GridRows(size any, modifiers ...Modifier) Tempest
+	Gap(size any, modifiers ...Modifier) Tempest
+	Order(index int, modifiers ...Modifier) Tempest
 }
 
-func (b *Builder) GridCols(size any, modifiers ...Modifier) Class {
+func (b *Builder) GridCols(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix: "grid-cols-",
@@ -22,7 +24,7 @@ func (b *Builder) GridCols(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) GridRows(size any, modifiers ...Modifier) Class {
+func (b *Builder) GridRows(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix: "grid-rows-",
@@ -35,7 +37,7 @@ func (b *Builder) GridRows(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Gap(size any, modifiers ...Modifier) Class {
+func (b *Builder) Gap(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "gap-",
@@ -47,7 +49,7 @@ func (b *Builder) Gap(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Order(index int, modifiers ...Modifier) Class {
+func (b *Builder) Order(index int, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "order-",

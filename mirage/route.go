@@ -12,17 +12,19 @@ type RouteConfig struct {
 }
 
 type Route struct {
-	Lang      string
-	Path      string
-	Name      string
-	Matcher   *regexp.Regexp
-	Methods   []string
-	Firewalls []firewall.Firewall
+	Lang     string
+	Path     string
+	Name     string
+	Layout   layoutFactory
+	Matcher  *regexp.Regexp
+	Methods  []string
+	Firewall []firewall.Firewall
 }
 
 const (
 	routeMethod = iota
 	routeName
+	routeLayout
 )
 
 func Method(method ...string) RouteConfig {
@@ -35,6 +37,13 @@ func Method(method ...string) RouteConfig {
 func Name(name string) RouteConfig {
 	return RouteConfig{
 		Type:  routeName,
+		Value: name,
+	}
+}
+
+func Layout(name string) RouteConfig {
+	return RouteConfig{
+		Type:  routeLayout,
 		Value: name,
 	}
 }

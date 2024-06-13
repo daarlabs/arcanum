@@ -10,7 +10,7 @@ func TestSaveRepository(t *testing.T) {
 	te := Entity[testEntity]()
 	t.Run(
 		"insert", func(t *testing.T) {
-			r := Repository[testEntity, int](nil).Save(
+			r := Repository[testEntity](nil).Save(
 				Use(testModel{Email: "test@test.com"}),
 				Selector(te.Id()),
 			)
@@ -23,7 +23,7 @@ func TestSaveRepository(t *testing.T) {
 	)
 	t.Run(
 		"update", func(t *testing.T) {
-			r := Repository[testEntity, int](nil).Save(
+			r := Repository[testEntity](nil).Save(
 				Use(testModel{Id: 1, Email: "test@test.com"}),
 				Selector(te.Id()),
 			)
@@ -36,7 +36,7 @@ func TestSaveRepository(t *testing.T) {
 	)
 	t.Run(
 		"insert with vectors", func(t *testing.T) {
-			r := Repository[fulltextEntity, int](nil).Save(
+			r := Repository[fulltextEntity](nil).Save(
 				Use(
 					fulltextModel{
 						Name:    "Dominik",
@@ -56,7 +56,7 @@ func TestSaveRepository(t *testing.T) {
 	)
 	t.Run(
 		"update with vectors", func(t *testing.T) {
-			r := Repository[fulltextEntity, int](nil).Save(
+			r := Repository[fulltextEntity](nil).Save(
 				Use(
 					fulltextModel{
 						Id:   1,
@@ -76,7 +76,7 @@ func TestSaveRepository(t *testing.T) {
 	)
 	t.Run(
 		"insert with timestamp", func(t *testing.T) {
-			r := Repository[timeEntity, int](nil).Save(
+			r := Repository[timeEntity](nil).Save(
 				Selector(te.Id()),
 			)
 			b := r.Build()
@@ -89,7 +89,7 @@ func TestSaveRepository(t *testing.T) {
 	)
 	t.Run(
 		"update with timestamp", func(t *testing.T) {
-			r := Repository[timeEntity, int](nil).Save(
+			r := Repository[timeEntity](nil).Save(
 				Use(timeModel{Id: 1}),
 				Selector(te.Id()),
 			)

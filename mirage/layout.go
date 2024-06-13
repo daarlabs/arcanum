@@ -4,8 +4,8 @@ import "github.com/daarlabs/arcanum/gox"
 
 type layoutFactory = func(c Ctx, nodes ...gox.Node) gox.Node
 
-type Layout interface {
-	Add(name string, layout layoutFactory) Layout
+type LayoutManager interface {
+	Add(name string, layout layoutFactory) LayoutManager
 }
 
 type layout struct {
@@ -18,7 +18,7 @@ func createLayout() *layout {
 	}
 }
 
-func (l *layout) Add(name string, layout layoutFactory) Layout {
+func (l *layout) Add(name string, layout layoutFactory) LayoutManager {
 	l.factories[name] = layout
 	return l
 }

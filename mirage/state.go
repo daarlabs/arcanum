@@ -10,12 +10,13 @@ import (
 )
 
 type state struct {
-	token      string
-	exists     bool
-	cache      cache.Client
-	cookie     cookie.Cookie
-	Components map[string]any `json:"components"`
-	Messages   []Message      `json:"messages"`
+	token                string
+	exists               bool
+	cache                cache.Client
+	cookie               cookie.Cookie
+	Components           map[string]any       `json:"components"`
+	ComponentsExpiration map[string]time.Time `json:"componentsExpiration"`
+	Messages             []Message            `json:"messages"`
 }
 
 const (
@@ -29,10 +30,11 @@ var (
 
 func createState(cache cache.Client, cookie cookie.Cookie) *state {
 	s := &state{
-		cache:      cache,
-		cookie:     cookie,
-		Components: make(map[string]any),
-		Messages:   make([]Message, 0),
+		cache:                cache,
+		cookie:               cookie,
+		Components:           make(map[string]any),
+		ComponentsExpiration: make(map[string]time.Time),
+		Messages:             make([]Message, 0),
 	}
 	s.token = cookie.Get(stateCookieKey)
 	s.exists = len(s.token) > 0
@@ -41,6 +43,7 @@ func createState(cache cache.Client, cookie cookie.Cookie) *state {
 	}
 	if s.exists {
 		cache.MustGet(stateCacheKey+":"+s.token, s)
+		s.cleanComponents()
 	}
 	return s
 }
@@ -56,4 +59,23 @@ func (s *state) mustSave() {
 		panic(err)
 	}
 	s.cache.MustGet(stateCacheKey+":"+s.token, s)
+}
+
+func (s *state) cleanComponents() {
+	t := time.Now()
+	cleaned := false
+	for name := range s.Components {
+		expiration, ok := s.ComponentsExpiration[name]
+		if !ok {
+			continue
+		}
+		if t.After(expiration) {
+			cleaned = true
+			delete(s.Components, name)
+			delete(s.ComponentsExpiration, name)
+		}
+	}
+	if cleaned {
+		s.mustSave()
+	}
 }

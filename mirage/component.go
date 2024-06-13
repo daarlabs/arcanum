@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+	"time"
 	
 	"github.com/daarlabs/arcanum/gox"
 )
@@ -32,7 +33,8 @@ type componentCtx struct {
 }
 
 var (
-	componentType = reflect.TypeOf(Component{})
+	componentType       = reflect.TypeOf(Component{})
+	componentExpiration = 7 * 24 * time.Hour
 )
 
 func createComponent(ct MandatoryComponent, ctx *ctx, route *Route, action string) *component {
@@ -111,7 +113,7 @@ func (c *component) injectContext() {
 }
 
 func (c *component) get() error {
-	ct, ok := c.ctx.state.Components[c.route.Name+namePrefixDivider+c.ct.Name()]
+	ct, ok := c.ctx.state.Components[c.getFullname()]
 	if !ok {
 		return nil
 	}
@@ -130,6 +132,12 @@ func (c *component) mustGet() {
 }
 
 func (c *component) save() {
-	c.ctx.state.Components[c.route.Name+namePrefixDivider+c.ct.Name()] = c.ct
+	name := c.getFullname()
+	c.ctx.state.Components[name] = c.ct
+	c.ctx.state.ComponentsExpiration[name] = time.Now().Add(componentExpiration)
 	c.ctx.state.mustSave()
+}
+
+func (c *component) getFullname() string {
+	return c.route.Name + namePrefixDivider + c.ct.Name()
 }

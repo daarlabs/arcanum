@@ -3,6 +3,7 @@ package tempest
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -14,6 +15,12 @@ const (
 var (
 	classEscaper = strings.NewReplacer(
 		` `, `_`,
+	)
+)
+
+var (
+	selectorEscaper = strings.NewReplacer(
+		` `, `_`,
 		`.`, `\.`,
 		`:`, `\:`,
 		`[`, `\[`,
@@ -22,13 +29,19 @@ var (
 	)
 )
 
+var (
+	valueEscaper = strings.NewReplacer(
+		`_`, ` `,
+	)
+)
+
+var (
+	cssExtractMatcher = regexp.MustCompile(`(?s)\.([\w-]+)\s*\{(.*?)}`)
+)
+
 func HexToRGB(hex string, opacity float64) string {
 	rgb := convertHexToRGB(hex)
-	return createRGBString(rgb, opacity/float64(100))
-}
-
-func escape(value string) string {
-	return classEscaper.Replace(value)
+	return createRGBString(rgb, opacity)
 }
 
 func mergeConfigMap[T any](c1, c2 map[string]T) map[string]T {
@@ -42,8 +55,25 @@ func mergeConfigMap[T any](c1, c2 map[string]T) map[string]T {
 	return result
 }
 
+func createStylesFromMap(m map[string]string) string {
+	n := len(m)
+	if n == 0 {
+		return ""
+	}
+	result := make([]string, n)
+	i := 0
+	for k, v := range m {
+		result[i] = fmt.Sprintf("%s: %s", k, v)
+		i++
+	}
+	return strings.Join(result, ";") + ";"
+}
+
 func createRGBString(rgb RGB, opacity float64) string {
-	return fmt.Sprintf("rgb(%d %d %d / %.2f)", rgb.R, rgb.G, rgb.B, opacity)
+	if opacity > 1 {
+		opacity = opacity / 100
+	}
+	return fmt.Sprintf("rgb(%d %d %d / %s)", rgb.R, rgb.G, rgb.B, createMostSuitableNumber(opacity))
 }
 
 func convertHexToRGB(hex string) RGB {
@@ -88,15 +118,22 @@ func stringifyMostSuitableNumericType(value any) string {
 		if v == math.Floor(v) {
 			return fmt.Sprintf("%d", int(v))
 		}
-		return fmt.Sprintf("%.2f", v)
+		return createMostSuitableNumber(v)
 	case float32:
 		if float64(v) == math.Floor(float64(v)) {
 			return fmt.Sprintf("%d", int(v))
 		}
-		return fmt.Sprintf("%.2f", v)
+		return createMostSuitableNumber(float64(v))
 	default:
 		return fmt.Sprintf("%v", v)
 	}
+}
+
+func createMostSuitableNumber(value float64) string {
+	r := fmt.Sprintf("%.6f", value)
+	r = strings.TrimRight(r, "0")
+	r = strings.TrimRight(r, ".")
+	return r
 }
 
 func convertSizeToRem(fontSize float64, value any) any {
@@ -114,4 +151,39 @@ func convertSizeToRem(fontSize float64, value any) any {
 	default:
 		return v
 	}
+}
+
+func createColorPrefix(category, name string, code int) string {
+	if code == 0 {
+		return fmt.Sprintf("%s-%s", category, name)
+	}
+	return fmt.Sprintf("%s-%s-%d", category, name, code)
+}
+
+func createOpacity(modifiers []Modifier) float64 {
+	opacity := float64(1)
+	for _, modifier := range modifiers {
+		if modifier.Name != opacityModifier {
+			continue
+		}
+		opacity = modifier.Value.(float64)
+		break
+	}
+	if opacity > 1 {
+		opacity = opacity / 100
+	}
+	return opacity
+}
+
+func extractCssProps(css string) []string {
+	matches := cssExtractMatcher.FindAllStringSubmatch(css, -1)
+	var properties []string
+	for _, match := range matches {
+		if len(match) < 3 {
+			continue
+		}
+		cleaned := strings.TrimSpace(match[2])
+		properties = append(properties, cleaned)
+	}
+	return properties
 }

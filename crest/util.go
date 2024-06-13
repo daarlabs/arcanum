@@ -13,36 +13,31 @@ func TsVector(values ...any) string {
 	return quirk.CreateTsVector(values...)
 }
 
+func CreateFieldsTsVector(values Map, fields ...Field) string {
+	n := len(fields)
+	r := make([]any, n)
+	for i, f := range fields {
+		v, ok := values[f.Name()]
+		if !ok {
+			continue
+		}
+		r[i] = v
+	}
+	return TsVector(r...)
+}
+
 func generateRandomString(length int) string {
-	// b := make([]byte, length)
-	// _, err := rand.Read(b)
-	// if err != nil {
-	// 	return ""
-	// }
 	return randstr.Hex(length)
 }
 
-func findField(name string, fields []Field) *field {
-	for _, item := range fields {
-		if item == nil {
-			continue
-		}
-		f := item.(*field)
-		if f.name == name {
-			return f
-		}
-	}
-	return nil
-}
-
-func createInsertSqlFromValues(fields []Field, values map[string]any) string {
+func createInsertSqlFromValues(force bool, fields []Field, values map[string]any) string {
 	sql := make([]string, 0)
 	for _, item := range fields {
 		if item == nil {
 			continue
 		}
-		f := item.(*field)
-		if f.primaryKey {
+		f := any(item).(*field)
+		if f.primaryKey && !force {
 			continue
 		}
 		v, ok := values[f.name]
@@ -74,7 +69,7 @@ func createUpdateSqlFromValues(fields []Field, values map[string]any) string {
 		if item == nil {
 			continue
 		}
-		f := item.(*field)
+		f := any(item).(*field)
 		if f.primaryKey {
 			continue
 		}
@@ -131,7 +126,7 @@ func buildFieldsSqlWithoutPrimaryKey[T QueryBuilder](builders ...T) string {
 
 func buildJoins(q *sqlBuilder, relationships []*relationshipBuilder, fields []Field) {
 	for _, item := range fields {
-		f := item.(*field)
+		f := any(item).(*field)
 		if f.relationship == nil {
 			continue
 		}
@@ -229,7 +224,7 @@ func doesExistDistinct(shapes []*shapeBuilder) bool {
 
 func getPrimaryKeyField(fields ...Field) *field {
 	for _, item := range fields {
-		f := item.(*field)
+		f := any(item).(*field)
 		if f.primaryKey {
 			return f
 		}

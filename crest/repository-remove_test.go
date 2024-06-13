@@ -11,7 +11,7 @@ func TestRemoveRepository(t *testing.T) {
 	t.Run(
 		"equal id", func(t *testing.T) {
 			id := 1
-			r := Repository[testEntity, int](nil).Remove(
+			r := Repository[testEntity](nil).Remove(
 				Filter().Field(te.Id()).Equal().Value(id, "id"),
 			)
 			build := r.Build()
@@ -26,7 +26,7 @@ func TestRemoveRepository(t *testing.T) {
 	t.Run(
 		"in ids slice", func(t *testing.T) {
 			ids := []int{1, 2, 3}
-			r := Repository[testEntity, int](nil).Remove(
+			r := Repository[testEntity](nil).Remove(
 				Filter().Field(te.Id()).In().Value(ids, "ids"),
 				Selector(te.Id()),
 			)

@@ -14,18 +14,18 @@ func TestBorderBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				borderWidthClass(`.border-4`, "4px"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
 	t.Run(
 		"rounded basic", func(t *testing.T) {
 			c := New(Config{}).Context()
-			class := c.Class().Rounded(SizeBase).String()
+			class := c.Class().Rounded(SizeMain).String()
 			assert.Equal(
 				t,
-				borderRadiusClass(`.rounded-base`, SizeBase),
-				c.Tempest.classes[class],
+				borderRadiusClass(`.rounded-base`, SizeMain),
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -36,7 +36,7 @@ func TestBorderBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				borderRadiusClass(`.rounded-4px`, "4px"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

@@ -66,7 +66,7 @@ func TestShapeBuilder(t *testing.T) {
 	)
 	t.Run(
 		"remove duplicates", func(t *testing.T) {
-			r := Repository[testEntity, []int](nil).
+			r := Repository[testEntity](nil).
 				Find(
 					Shape().Duplicates().Remove(),
 				)
@@ -79,7 +79,7 @@ func TestShapeBuilder(t *testing.T) {
 	)
 	t.Run(
 		"aggregate func added to group by", func(t *testing.T) {
-			r := Repository[testEntity, []int](nil).
+			r := Repository[testEntity](nil).
 				Find(
 					Selector(te.Email()),
 					Selector().Count(te.Id()),

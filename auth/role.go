@@ -1,8 +1,6 @@
-package firewall
+package auth
 
-import (
-	"slices"
-)
+import "slices"
 
 type Role struct {
 	Name       string   `json:"name"`

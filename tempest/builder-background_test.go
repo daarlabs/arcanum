@@ -10,22 +10,22 @@ func TestBackgroundBuilder(t *testing.T) {
 	t.Run(
 		"color", func(t *testing.T) {
 			c := New(Config{}).Context()
-			class := c.Class().BgColor(Slate, 500).String()
+			class := c.Class().Bg(Slate, 500).String()
 			assert.Equal(
 				t,
 				colorClass("background-color", `.bg-slate-500`, Pallete[Slate][500], 1),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
 	t.Run(
 		"color opacity", func(t *testing.T) {
 			c := New(Config{}).Context()
-			class := c.Class().BgColor(Slate, 500, Opacity(80)).String()
+			class := c.Class().Bg(Slate, 500, Opacity(80)).String()
 			assert.Equal(
 				t,
 				colorClass("background-color", `.bg-slate-500\/80`, Pallete[Slate][500], 0.8),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

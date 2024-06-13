@@ -14,7 +14,7 @@ func TestFlexBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				flexClass(".flex-none", "none"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

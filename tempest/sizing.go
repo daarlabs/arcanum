@@ -45,7 +45,7 @@ const (
 	SizeXs   = "xs"
 	SizeSm   = "sm"
 	SizeMd   = "md"
-	SizeBase = "base"
+	SizeMain = "main"
 	SizeLg   = "lg"
 	SizeXl   = "xl"
 	SizeXxl  = "xxl"
@@ -55,7 +55,7 @@ var (
 	standardizedSize = map[string]string{
 		SizeXs:   "0.75rem",
 		SizeSm:   "0.875rem",
-		SizeBase: "1rem",
+		SizeMain: "1rem",
 		SizeLg:   "1.125rem",
 		SizeXl:   "1.25rem",
 		SizeXxl:  "1.5rem",
@@ -66,7 +66,7 @@ var (
 	standardizedLineHeight = map[string]string{
 		SizeXs:   "1rem",
 		SizeSm:   "1.25rem",
-		SizeBase: "1.5rem",
+		SizeMain: "1.5rem",
 		SizeLg:   "1.75rem",
 		SizeXl:   "2rem",
 		SizeXxl:  "2.25rem",
@@ -78,7 +78,7 @@ var (
 		Full:     "100%",
 		None:     "0",
 		SizeSm:   "0.125rem",
-		SizeBase: "0.25rem",
+		SizeMain: "0.25rem",
 		SizeLg:   "0.375rem",
 		SizeXl:   "0.5rem",
 		SizeXxl:  "0.75rem",

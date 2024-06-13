@@ -27,3 +27,11 @@ func shadowColorClass(selector string, hex string, opacity float64) string {
 		createRGBString(convertHexToRGB(hex), opacity),
 	)
 }
+
+func opacityClass(selector string, opacity float64) string {
+	return fmt.Sprintf(
+		`%s{opacity: %s;}`,
+		selector,
+		createMostSuitableNumber(opacity),
+	)
+}

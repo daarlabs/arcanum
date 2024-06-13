@@ -44,10 +44,10 @@ func (e testEntity) Alias() string {
 }
 
 func (e testEntity) Fields() []Field {
-	return e.Register(
+	return []Field{
 		e.Id(),
 		e.Email(),
-	)
+	}
 }
 
 func (e testEntity) Id() Field {
@@ -89,9 +89,9 @@ func (e bookEntity) Alias() string {
 }
 
 func (e bookEntity) Fields() []Field {
-	return e.Register(
+	return []Field{
 		e.Id(),
-	)
+	}
 }
 
 func (e bookEntity) Id() Field {
@@ -120,10 +120,10 @@ func (e chapterEntity) Alias() string {
 }
 
 func (e chapterEntity) Fields() []Field {
-	return e.Register(
+	return []Field{
 		e.Id(),
 		e.BookId(),
-	)
+	}
 }
 
 func (e chapterEntity) Id() Field {
@@ -153,11 +153,11 @@ func (e fulltextEntity) Alias() string {
 }
 
 func (e fulltextEntity) Fields() []Field {
-	return e.Register(
+	return []Field{
 		e.Id(),
 		e.Name(),
 		e.Vectors(),
-	)
+	}
 }
 
 func (e fulltextEntity) Id() Field {
@@ -177,7 +177,7 @@ func (e fulltextEntity) Vectors() Field {
 		TsVector().
 		NotNull().
 		Default("").
-		ValueFactory(
+		CreateValue(
 			func(operation string, values Map) Value {
 				if operation == Insert {
 					return nil
@@ -204,11 +204,11 @@ func (e timeEntity) Alias() string {
 }
 
 func (e timeEntity) Fields() []Field {
-	return e.Register(
+	return []Field{
 		e.Id(),
 		e.CreatedAt(),
 		e.UpdatedAt(),
-	)
+	}
 }
 
 func (e timeEntity) Id() Field {
@@ -222,7 +222,7 @@ func (e timeEntity) CreatedAt() Field {
 		Type("TIMESTAMP").
 		NotNull().
 		Default(quirk.CurrentTimestamp).
-		ValueFactory(
+		CreateValue(
 			func(operation string, values Map) Value {
 				if operation == Update {
 					return nil
@@ -237,7 +237,7 @@ func (e timeEntity) UpdatedAt() Field {
 		Type("TIMESTAMP").
 		NotNull().
 		Default(quirk.CurrentTimestamp).
-		ValueFactory(
+		CreateValue(
 			func(operation string, values Map) Value {
 				return Safe(quirk.CurrentTimestamp)
 			},

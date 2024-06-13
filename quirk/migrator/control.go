@@ -3,14 +3,14 @@ package migrator
 import "github.com/daarlabs/arcanum/quirk"
 
 type Control interface {
-	DB(name ...string) *quirk.Quirk
+	DB(name ...string) *quirk.DB
 }
 
 type control struct {
 	*migrator
 }
 
-func (c *control) DB(name ...string) *quirk.Quirk {
+func (c *control) DB(name ...string) *quirk.DB {
 	n := mainDbname
 	if len(name) > 0 {
 		n = name[0]
@@ -19,5 +19,5 @@ func (c *control) DB(name ...string) *quirk.Quirk {
 	if !ok {
 		panic(ErrorInvalidDatabase)
 	}
-	return quirk.New(d)
+	return d
 }

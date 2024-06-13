@@ -51,11 +51,11 @@ func (m *entityMigrator) GetDownSql() string {
 }
 
 func (m *entityMigrator) Up() error {
-	return nil
+	return m.db.Q(m.GetUpSql()).Exec()
 }
 
 func (m *entityMigrator) Down() error {
-	return nil
+	return m.db.Q(m.GetDownSql()).Exec()
 }
 
 func (m *entityMigrator) MustUp() {

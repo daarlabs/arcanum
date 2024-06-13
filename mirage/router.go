@@ -8,6 +8,7 @@ import (
 	
 	"github.com/daarlabs/arcanum/config"
 	"github.com/daarlabs/arcanum/firewall"
+	"github.com/daarlabs/arcanum/tempest"
 	"github.com/daarlabs/arcanum/util"
 	"github.com/daarlabs/arcanum/util/constant/fileSuffix"
 )
@@ -100,10 +101,10 @@ func (r *router) createDynamicAssetsRoute() {
 			http.MethodGet, path, "assets", func(c Ctx) error {
 				name := c.Request().PathValue("name")
 				if strings.HasSuffix(name, fileSuffix.Css) && strings.Contains(name, "-"+r.assets.code+".") {
-					return c.Response().Asset(name, []byte(r.config.Tempest.Styles()))
+					return c.Response().Asset(name, []byte(tempest.Styles()))
 				}
 				if strings.HasSuffix(name, fileSuffix.Js) && strings.Contains(name, "-"+r.assets.code+".") {
-					return c.Response().Asset(name, []byte(r.config.Tempest.Scripts()))
+					return c.Response().Asset(name, []byte(tempest.Scripts()))
 				}
 				return c.Response().Status(http.StatusNotFound).Error(http.StatusText(http.StatusNotFound))
 			},
@@ -150,7 +151,7 @@ func (r *router) createCanonicalRoute(path string, lang string, config ...RouteC
 }
 
 func (r *router) createRoute(path string, fn Handler, lang string, config ...RouteConfig) {
-	var name string
+	var name, layout string
 	methods := make([]string, 0)
 	for _, cfg := range config {
 		switch cfg.Type {
@@ -158,7 +159,12 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 			methods = cfg.Value.([]string)
 		case routeName:
 			name = cfg.Value.(string)
+		case routeLayout:
+			layout = cfg.Value.(string)
 		}
+	}
+	if len(layout) == 0 {
+		layout = Main
 	}
 	if len(methods) == 0 {
 		methods = append(methods, httpMethods...)
@@ -180,12 +186,13 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 	}
 	*r.routes = append(
 		*r.routes, &Route{
-			Lang:      lang,
-			Path:      path,
-			Name:      name,
-			Methods:   methods,
-			Matcher:   r.createMatcher(path),
-			Firewalls: r.createFirewalls(path, name),
+			Lang:     lang,
+			Path:     path,
+			Name:     name,
+			Methods:  methods,
+			Layout:   r.core.layout.factories[layout],
+			Matcher:  r.createMatcher(path),
+			Firewall: r.createFirewall(path, name),
 		},
 	)
 	for _, method := range methods {
@@ -196,9 +203,9 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 	}
 }
 
-func (r *router) createFirewalls(path, name string) []firewall.Firewall {
+func (r *router) createFirewall(path, name string) []firewall.Firewall {
 	result := make([]firewall.Firewall, 0)
-	for _, f := range r.config.Security.Firewalls {
+	for _, f := range r.config.Security.Firewall {
 		if f.Match(path) {
 			result = append(result, f)
 			continue

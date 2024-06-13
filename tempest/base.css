@@ -1,7 +1,22 @@
+:root {
+	--tempest-transform-translate-x: 0;
+	--tempest-transform-translate-y: 0;
+	--tempest-transform-rotate: 0;
+	--tempest-transform-skew-x: 0;
+	--tempest-transform-skew-y: 0;
+	--tempest-transform-scale-x: 1;
+	--tempest-transform-scale-y: 1;
+}
+
 * {
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
+	border: 0 solid transparent;
+}
+
+*:focus {
+	outline: none !important;
 }
 
 html {
@@ -10,4 +25,29 @@ html {
 
 body {
 	font-family: @FontFamily;
+}
+
+button {
+	background-color: transparent;
+	cursor: pointer;
+}
+
+svg {
+	display: block;
+}
+
+a:-webkit-any-link {
+	text-decoration: none;
+}
+
+[x-cloak] { display: none !important; }
+
+.indicator {
+	visibility: hidden;
+	opacity: 0;
+}
+
+.htmx-request .indicator, .htmx-request.indicator, .form-submit .indicator {
+	visibility: visible;
+	opacity: 1;
 }

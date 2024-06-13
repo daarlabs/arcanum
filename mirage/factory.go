@@ -40,7 +40,7 @@ func (f factory) Defer(link string, nodes ...gox.Node) gox.Node {
 }
 
 func (f factory) Form(fields ...*form.FieldBuilder) *form.Builder {
-	isCsrfEnabled := f.ctx.Config().Security.Csrf != nil
+	isCsrfEnabled := f.ctx.Config().Security.Csrf != nil && f.ctx.Config().Security.Csrf.IsEnabled()
 	method := f.ctx.Request().Method()
 	if f.ctx.Request().Is().Get() {
 		method = http.MethodPost
@@ -54,6 +54,7 @@ func (f factory) Form(fields ...*form.FieldBuilder) *form.Builder {
 		link += f.ctx.Generate().Query(q)
 	}
 	r := form.New(fields...).
+		Limit(f.ctx.Config().Form.Limit).
 		Method(method).
 		Action(link).
 		Request(f.ctx.r).

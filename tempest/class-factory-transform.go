@@ -1,6 +1,15 @@
 package tempest
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+var (
+	transformOriginEscaper = strings.NewReplacer(
+		`-`, ` `,
+	)
+)
 
 func transformClass(selector string, _ string) string {
 	return fmt.Sprintf(
@@ -95,5 +104,13 @@ func transformScaleYAxisClass(selector string, value string) string {
 		transformScaleYVar,
 		value,
 		transformClass(selector, value),
+	)
+}
+
+func transformOriginClass(selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{transform-origin: %s;}`,
+		selector,
+		transformOriginEscaper.Replace(value),
 	)
 }

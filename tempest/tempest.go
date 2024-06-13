@@ -4,150 +4,119 @@ import (
 	"embed"
 	"fmt"
 	"strings"
-	"sync"
 )
 
-type Tempest struct {
-	mu                      *sync.RWMutex
-	config                  Config
-	externalResourceManager *externalResourceManager
-	classes                 map[string]string
-	baseStyles              string
-	stylesBundle            string
-	externalStylesBundle    string
-	scriptsBundle           string
-}
+const (
+	initialClassmapPriority = 2
+)
 
 const (
 	baseCssFilename = "base.css"
 )
 
+var (
+	GlobalConfig *Config
+)
+
+var (
+	externalStyles string
+	baseStyles     string
+	scripts        string
+)
+
 //go:embed base.css
 var baseCss embed.FS
 
-func New(config Config) *Tempest {
-	t := &Tempest{
-		mu:                      new(sync.RWMutex),
-		config:                  config,
-		externalResourceManager: createExternalResourceManager(config),
-		classes:                 make(map[string]string),
+func init() {
+	mustReadBaseStylesFile()
+	initGlobalClassmaps()
+}
+
+func Class(classes ...string) Tempest {
+	return createBuilder(classes...)
+}
+
+func Start() {
+	processGlobalConfig()
+	processBaseStyles()
+	erm := createExternalResourceManager()
+	erm.mustRun()
+	buildExternalStyles(erm)
+	buildScripts(erm)
+}
+
+func Styles() string {
+	return buildStyles()
+}
+
+func NamedStyles(name string) string {
+	return buildNamedStyles(name)
+}
+
+func Scripts() string {
+	return scripts
+}
+
+func processGlobalConfig() {
+	if GlobalConfig == nil {
+		GlobalConfig = &Config{}
 	}
-	if config.FontSize == 0 {
-		t.config.FontSize = DefaultFontSize
+	if GlobalConfig.FontSize == 0 {
+		GlobalConfig.FontSize = DefaultFontSize
 	}
-	if config.Breakpoint == nil {
-		t.config.Breakpoint = DefaultBreakpoints
+	if GlobalConfig.Breakpoint == nil {
+		GlobalConfig.Breakpoint = DefaultBreakpoints
 	}
-	if config.Container == nil {
-		t.config.Container = DefaultContainer
+	if GlobalConfig.Container == nil {
+		GlobalConfig.Container = DefaultContainer
 	}
-	t.config.Color = mergeConfigMap[Color](Pallete, config.Color)
-	t.config.Shadow = mergeConfigMap[[]Shadow](BoxShadow, config.Shadow)
-	t.config = t.config.processShadows()
-	t.onInit()
-	return t
+	GlobalConfig.Color = mergeConfigMap[Color](Pallete, GlobalConfig.Color)
+	GlobalConfig.Shadow = mergeConfigMap[[]Shadow](BoxShadow, GlobalConfig.Shadow)
+	GlobalConfig.Animation = mergeConfigMap[Animation](Animations, GlobalConfig.Animation)
+	GlobalConfig.processAnimations()
+	GlobalConfig.processShadows()
 }
 
-func (t *Tempest) Context() *Context {
-	return &Context{
-		Tempest:  t,
-		builders: make([]*Builder, 0),
-		classes:  make(map[string]string),
-	}
+func processBaseStyles() {
+	replacer := strings.NewReplacer(
+		"\n", " ",
+		"\t", "",
+		"\r", "",
+		baseFontSize, stringifyMostSuitableNumericType(GlobalConfig.FontSize)+Px,
+		baseFontFamily, fmt.Sprintf("%s", GlobalConfig.FontFamily),
+	)
+	baseStyles = replacer.Replace(baseStyles)
 }
 
-func (t *Tempest) Fonts() map[string]Font {
-	return t.config.Font
-}
-
-func (t *Tempest) Styles() string {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return t.stylesBundle
-}
-
-func (t *Tempest) Scripts() string {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return t.scriptsBundle
-}
-
-func (t *Tempest) Build() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.buildStyles()
-}
-
-func (t *Tempest) onInit() {
-	t.buildBaseStyles()
-	t.externalResourceManager.mustRun()
-	t.buildExternalStyles()
-	t.buildScripts()
-}
-
-func (t *Tempest) buildBaseStyles() {
-	t.mustReadBaseStylesFile()
-	t.processBaseStyles()
-}
-
-func (t *Tempest) readBaseStylesFile() error {
+func readBaseStylesFile() error {
 	baseStylesBytes, err := baseCss.ReadFile(baseCssFilename)
 	if err != nil {
 		return err
 	}
-	t.baseStyles = string(baseStylesBytes)
+	baseStyles = string(baseStylesBytes)
 	return nil
 }
 
-func (t *Tempest) mustReadBaseStylesFile() {
-	if err := t.readBaseStylesFile(); err != nil {
+func mustReadBaseStylesFile() {
+	if err := readBaseStylesFile(); err != nil {
 		panic(err)
 	}
 }
 
-func (t *Tempest) processBaseStyles() {
-	replacer := strings.NewReplacer(
-		" ", "",
-		"\n", " ",
-		"\t", "",
-		"\r", "",
-		baseFontSize, stringifyMostSuitableNumericType(t.config.FontSize)+Px,
-		baseFontFamily, fmt.Sprintf("%s", t.config.FontFamily),
-	)
-	t.baseStyles = replacer.Replace(t.baseStyles)
-	
-}
-
-func (t *Tempest) buildStyles() {
-	result := make([]string, len(t.classes))
-	i := 0
-	for _, v := range t.classes {
-		result[i] = v
-		i++
-	}
-	r := strings.Join(result, " ")
-	t.stylesBundle = t.externalStylesBundle + "\n" + t.baseStyles + "\n" + r
-}
-
-func (t *Tempest) buildExternalStyles() {
+func buildExternalStyles(erm *externalResourceManager) {
 	w := new(strings.Builder)
-	for _, item := range t.externalResourceManager.styles {
+	for _, item := range erm.styles {
 		w.Write(item)
 		w.WriteString("\n")
 	}
-	t.stylesBundle = w.String()
+	externalStyles = w.String()
 }
 
-func (t *Tempest) buildScripts() {
+func buildScripts(erm *externalResourceManager) {
 	w := new(strings.Builder)
-	for _, item := range t.externalResourceManager.scripts {
+	for _, item := range erm.scripts {
 		w.Write(item)
 		w.WriteString("\n")
 	}
-	t.scriptsBundle = w.String()
-}
-
-func (t *Tempest) classExists(name string) bool {
-	_, ok := t.classes[name]
-	return ok
+	scripts = w.String()
 }

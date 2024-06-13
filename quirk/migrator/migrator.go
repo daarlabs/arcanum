@@ -171,6 +171,9 @@ func (m *migrator) check(err error) {
 func (m *migrator) getLastMigrationName() []string {
 	result := make([]string, 0)
 	for _, db := range m.databases {
+		if !m.migrationsTableExists(db) {
+			continue
+		}
 		var r string
 		quirk.New(db).Q(fmt.Sprintf(`SELECT name FROM %s ORDER BY created_at DESC LIMIT 1`, migrationsTable)).MustExec(&r)
 		if !slices.Contains(result, r) {
@@ -180,9 +183,26 @@ func (m *migrator) getLastMigrationName() []string {
 	return result
 }
 
+func (m *migrator) migrationsTableExists(db *quirk.DB) bool {
+	var r bool
+	db.Q(
+		fmt.Sprintf(
+			`SELECT EXISTS (
+SELECT 1
+FROM pg_tables
+WHERE tablename = '%s'
+) AS table_existence`, migrationsTable,
+		),
+	).MustExec(&r)
+	return r
+}
+
 func (m *migrator) getExistingMigrationsNames() []string {
 	result := make([]string, 0)
 	for _, db := range m.databases {
+		if !m.migrationsTableExists(db) {
+			continue
+		}
 		r := make([]string, 0)
 		quirk.New(db).Q(fmt.Sprintf(`SELECT name FROM %s ORDER BY created_at ASC`, migrationsTable)).MustExec(&r)
 		for _, name := range r {
@@ -196,6 +216,9 @@ func (m *migrator) getExistingMigrationsNames() []string {
 
 func (m *migrator) insertMigration(name string) {
 	for _, db := range m.databases {
+		if !m.migrationsTableExists(db) {
+			continue
+		}
 		quirk.New(db).
 			Q(
 				fmt.Sprintf(
@@ -210,6 +233,9 @@ func (m *migrator) insertMigration(name string) {
 
 func (m *migrator) deleteMigration(name string) {
 	for _, db := range m.databases {
+		if !m.migrationsTableExists(db) {
+			continue
+		}
 		quirk.New(db).Q(
 			fmt.Sprintf(`DELETE FROM %s WHERE name = @name`, migrationsTable), quirk.Map{"name": name},
 		).MustExec()

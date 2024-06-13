@@ -7,10 +7,10 @@ import (
 )
 
 func TestTemporaryBuilder(t *testing.T) {
-	r := Repository[chapterEntity, int](nil).Save(
+	r := Repository[chapterEntity](nil).Save(
 		Temporary(
 			"books",
-			Repository[bookEntity, int](nil).Find(),
+			Repository[bookEntity](nil).Find(),
 		),
 		Use(chapterModel{Id: 1}),
 		Use(Map{"book_id": Safe("books.id")}),

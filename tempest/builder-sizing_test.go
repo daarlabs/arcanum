@@ -14,7 +14,7 @@ func TestSizingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				widthClass(".w-4", "1rem"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -25,7 +25,7 @@ func TestSizingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				widthClass(`.w-1px`, "1px"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -36,7 +36,7 @@ func TestSizingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				sizeClass(`.size-8`, "2rem"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -50,22 +50,22 @@ func TestSizingBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				widthClass(`.w-auto`, "auto"),
-				c.Tempest.classes[class1],
+				c.Core.classes[class1],
 			)
 			assert.Equal(
 				t,
 				widthClass(`.w-full`, "full"),
-				c.Tempest.classes[class2],
+				c.Core.classes[class2],
 			)
 			assert.Equal(
 				t,
 				widthClass(`.w-0`, "0"),
-				c.Tempest.classes[class3],
+				c.Core.classes[class3],
 			)
 			assert.Equal(
 				t,
 				widthClass(`.w-screen`, "screen"),
-				c.Tempest.classes[class4],
+				c.Core.classes[class4],
 			)
 		},
 	)

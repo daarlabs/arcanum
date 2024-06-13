@@ -24,36 +24,35 @@ var (
 	}
 )
 
-func CreateTable(q *quirk.Quirk) error {
+func CreateTable(db *quirk.DB) error {
 	fields := make([]quirk.Field, 0)
-	switch q.DB.DriverName() {
+	switch db.DriverName() {
 	case quirk.Postgres:
 		for _, f := range pgUserFields {
 			fields = append(fields, f)
 		}
 	}
-	q.Q(
+	return db.Q(
 		fmt.Sprintf(
 			`CREATE TABLE IF NOT EXISTS %s (%s)`,
 			usersTable,
 			quirk.CreateTableStructure(fields),
 		),
-	)
-	return q.Exec()
+	).Exec()
 }
 
-func MustCreateTable(q *quirk.Quirk) {
+func MustCreateTable(q *quirk.DB) {
 	err := CreateTable(q)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func DropTable(q *quirk.Quirk) error {
+func DropTable(q *quirk.DB) error {
 	return q.Q(fmt.Sprintf(`DROP TABLE IF EXISTS %s CASCADE`, usersTable)).Exec()
 }
 
-func MustDropTable(q *quirk.Quirk) {
+func MustDropTable(q *quirk.DB) {
 	err := DropTable(q)
 	if err != nil {
 		panic(err)

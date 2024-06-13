@@ -15,12 +15,12 @@ func TestTransformBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				transformRotateClass(".rotate-45", "45deg"),
-				c.Tempest.classes[class1],
+				c.Core.classes[class1],
 			)
 			assert.Equal(
 				t,
 				transformRotateClass(".-rotate-180", "-180deg"),
-				c.Tempest.classes[class2],
+				c.Core.classes[class2],
 			)
 		},
 	)
@@ -32,12 +32,12 @@ func TestTransformBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				transformRotateClass(".rotate-45", "45deg"),
-				c.Tempest.classes[class1],
+				c.Core.classes[class1],
 			)
 			assert.Equal(
 				t,
 				transformTranslateXAxisClass(".translate-x-4", "1rem"),
-				c.Tempest.classes[class2],
+				c.Core.classes[class2],
 			)
 		},
 	)
@@ -48,7 +48,7 @@ func TestTransformBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				transformSkewXAxisClass(".skew-x-45", "45deg"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

@@ -180,8 +180,8 @@ func (s sessionManager) getUserAgent() string {
 }
 
 func (s sessionManager) containsSuperRole(roles ...string) bool {
-	for name, item := range s.config.Roles {
-		if slices.Contains(roles, name) && item.Super {
+	for _, r := range s.config.Roles {
+		if slices.Contains(roles, r.Name) && r.Super {
 			return true
 		}
 	}

@@ -15,7 +15,7 @@ const (
 )
 
 func processRequest(req *http.Request, limit int) (url.Values, map[string][]*multipart.FileHeader, error) {
-	requestType, err := parseForm(req, limit)
+	requestType, err := ParseForm(req, limit)
 	if err != nil {
 		return createEmptyProcessRequestResult(err)
 	}
@@ -125,7 +125,7 @@ func processFormFiles(form *Builder, multipartFiles map[string][]*multipart.File
 	return nil
 }
 
-func parseForm(req *http.Request, limit int) (int, error) {
+func ParseForm(req *http.Request, limit int) (int, error) {
 	isForm := isRequestForm(req)
 	isMultipartForm := isRequestMultipartForm(req)
 	if !isForm && !isMultipartForm {

@@ -49,7 +49,7 @@ func TestFilterBuilder(t *testing.T) {
 		"or", func(t *testing.T) {
 			value1 := 1
 			value2 := 2
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Equal().Value(value1, "value1"),
 				Filter(Or()).Field(te.Id()).Equal().Value(value2, "value2"),
 			)
@@ -65,7 +65,7 @@ func TestFilterBuilder(t *testing.T) {
 		"or", func(t *testing.T) {
 			value1 := 1
 			value2 := 2
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Equal().Value(value1, "value1"),
 				Filter(Or()).Field(te.Id()).Equal().Value(value2, "value2"),
 			)
@@ -80,7 +80,7 @@ func TestFilterBuilder(t *testing.T) {
 	t.Run(
 		"gt", func(t *testing.T) {
 			value := 1
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Gt().Value(value, "value"),
 			)
 			b := r.Build()
@@ -94,7 +94,7 @@ func TestFilterBuilder(t *testing.T) {
 	t.Run(
 		"gte", func(t *testing.T) {
 			value := 1
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Gte().Value(value, "value"),
 			)
 			b := r.Build()
@@ -108,7 +108,7 @@ func TestFilterBuilder(t *testing.T) {
 	t.Run(
 		"lt", func(t *testing.T) {
 			value := 1
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Lt().Value(value, "value"),
 			)
 			b := r.Build()
@@ -122,7 +122,7 @@ func TestFilterBuilder(t *testing.T) {
 	t.Run(
 		"lte", func(t *testing.T) {
 			value := 1
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Lte().Value(value, "value"),
 			)
 			b := r.Build()
@@ -136,7 +136,7 @@ func TestFilterBuilder(t *testing.T) {
 	t.Run(
 		"aggregation", func(t *testing.T) {
 			value := 1
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Id()).Equal().Value(value, "value1"),
 				Filter(After()).Field(Selector().Count(te.Id())).Gt().Value(value, "value2"),
 			)
@@ -150,7 +150,7 @@ func TestFilterBuilder(t *testing.T) {
 	)
 	t.Run(
 		"tsquery", func(t *testing.T) {
-			r := Repository[testEntity, []int](nil).Find(
+			r := Repository[testEntity](nil).Find(
 				Filter().Field(te.Vectors()).Match().TsQuery("test1", "test2"),
 			)
 			b := r.Build()

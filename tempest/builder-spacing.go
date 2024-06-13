@@ -1,23 +1,23 @@
 package tempest
 
 type SpacingClass interface {
-	P(size any, modifiers ...Modifier) Class
-	Px(size any, modifiers ...Modifier) Class
-	Py(size any, modifiers ...Modifier) Class
-	Pt(size any, modifiers ...Modifier) Class
-	Pr(size any, modifiers ...Modifier) Class
-	Pb(size any, modifiers ...Modifier) Class
-	Pl(size any, modifiers ...Modifier) Class
-	M(size any, modifiers ...Modifier) Class
-	Mx(size any, modifiers ...Modifier) Class
-	My(size any, modifiers ...Modifier) Class
-	Mt(size any, modifiers ...Modifier) Class
-	Mr(size any, modifiers ...Modifier) Class
-	Mb(size any, modifiers ...Modifier) Class
-	Ml(size any, modifiers ...Modifier) Class
+	P(size any, modifiers ...Modifier) Tempest
+	Px(size any, modifiers ...Modifier) Tempest
+	Py(size any, modifiers ...Modifier) Tempest
+	Pt(size any, modifiers ...Modifier) Tempest
+	Pr(size any, modifiers ...Modifier) Tempest
+	Pb(size any, modifiers ...Modifier) Tempest
+	Pl(size any, modifiers ...Modifier) Tempest
+	M(size any, modifiers ...Modifier) Tempest
+	Mx(size any, modifiers ...Modifier) Tempest
+	My(size any, modifiers ...Modifier) Tempest
+	Mt(size any, modifiers ...Modifier) Tempest
+	Mr(size any, modifiers ...Modifier) Tempest
+	Mb(size any, modifiers ...Modifier) Tempest
+	Ml(size any, modifiers ...Modifier) Tempest
 }
 
-func (b *Builder) P(size any, modifiers ...Modifier) Class {
+func (b *Builder) P(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "p-",
@@ -29,7 +29,7 @@ func (b *Builder) P(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Px(size any, modifiers ...Modifier) Class {
+func (b *Builder) Px(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "px-",
@@ -41,7 +41,7 @@ func (b *Builder) Px(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Py(size any, modifiers ...Modifier) Class {
+func (b *Builder) Py(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "py-",
@@ -53,7 +53,7 @@ func (b *Builder) Py(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Pt(size any, modifiers ...Modifier) Class {
+func (b *Builder) Pt(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "pt-",
@@ -65,7 +65,7 @@ func (b *Builder) Pt(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Pr(size any, modifiers ...Modifier) Class {
+func (b *Builder) Pr(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "pr-",
@@ -77,7 +77,7 @@ func (b *Builder) Pr(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Pb(size any, modifiers ...Modifier) Class {
+func (b *Builder) Pb(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "pb-",
@@ -89,7 +89,7 @@ func (b *Builder) Pb(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Pl(size any, modifiers ...Modifier) Class {
+func (b *Builder) Pl(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "pl-",
@@ -101,7 +101,7 @@ func (b *Builder) Pl(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) M(size any, modifiers ...Modifier) Class {
+func (b *Builder) M(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "m-",
@@ -113,7 +113,7 @@ func (b *Builder) M(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Mx(size any, modifiers ...Modifier) Class {
+func (b *Builder) Mx(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "mx-",
@@ -125,7 +125,7 @@ func (b *Builder) Mx(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) My(size any, modifiers ...Modifier) Class {
+func (b *Builder) My(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "my-",
@@ -137,7 +137,7 @@ func (b *Builder) My(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Mt(size any, modifiers ...Modifier) Class {
+func (b *Builder) Mt(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "mt-",
@@ -149,7 +149,7 @@ func (b *Builder) Mt(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Mr(size any, modifiers ...Modifier) Class {
+func (b *Builder) Mr(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "mr-",
@@ -161,7 +161,7 @@ func (b *Builder) Mr(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Mb(size any, modifiers ...Modifier) Class {
+func (b *Builder) Mb(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "mb-",
@@ -173,7 +173,7 @@ func (b *Builder) Mb(size any, modifiers ...Modifier) Class {
 	)
 }
 
-func (b *Builder) Ml(size any, modifiers ...Modifier) Class {
+func (b *Builder) Ml(size any, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "ml-",

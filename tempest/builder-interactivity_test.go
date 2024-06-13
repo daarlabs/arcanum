@@ -14,7 +14,7 @@ func TestInteractivityBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				cursorClass(".cursor-pointer", "pointer"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

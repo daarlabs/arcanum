@@ -10,7 +10,7 @@ func TestFindRepository(t *testing.T) {
 	te := Entity[testEntity]()
 	t.Run(
 		"basic", func(t *testing.T) {
-			r := Repository[testEntity, []int](nil).Find().Build()
+			r := Repository[testEntity](nil).Find().Build()
 			assert.Equal(
 				t,
 				`SELECT t.id,t.email FROM test AS t`,
@@ -22,7 +22,7 @@ func TestFindRepository(t *testing.T) {
 		"with filters", func(t *testing.T) {
 			v1 := 1
 			v2 := 2
-			r := Repository[testEntity, []int](nil).
+			r := Repository[testEntity](nil).
 				Find(
 					Filter().Field(te.Id()).Equal().Value(v1, "v1"),
 					Filter(Or()).Group(

@@ -6,7 +6,6 @@ import (
 	"sync"
 	
 	"github.com/daarlabs/arcanum/filesystem"
-	"github.com/daarlabs/arcanum/tempest"
 	
 	"github.com/daarlabs/arcanum/auth"
 	"github.com/daarlabs/arcanum/cache"
@@ -38,7 +37,6 @@ type Ctx interface {
 	Parse() parser.Parse
 	Request() Request
 	Response() Response
-	Tempest() tempest.Class
 	Translate(key string, args ...map[string]any) string
 }
 
@@ -61,7 +59,6 @@ type ctx struct {
 	assets           *assets
 	lang             *lang
 	component        *componentCtx
-	tempest          *tempest.Context
 	write            *bool
 }
 
@@ -93,21 +90,20 @@ func createContext(p ctxParam) *ctx {
 		assets:           p.assets,
 		write:            &write,
 	}
-	if c.config.Tempest != nil {
-		c.tempest = c.config.Tempest.Context()
-	}
 	c.cookie = cookie.New(c.r, c.w, c.createCookiePathBasedOnRouterCookiePrefix())
-	c.csrf = csrf.New(
-		csrf.Cache(c.Cache()),
-		csrf.Cookie(c.cookie),
-		csrf.Request(p.r),
-	)
+	if c.config.Security.Csrf != nil && c.config.Security.Csrf.IsEnabled() {
+		c.csrf = csrf.New(
+			csrf.Cache(c.Cache()),
+			csrf.Cookie(c.cookie),
+			csrf.Request(p.r),
+			csrf.Expiration(c.config.Security.Csrf.GetExpiration()),
+		)
+	}
 	c.lang = createLang(c.Config(), c.Request(), c.Cookie())
 	c.response = &response{
 		Sender: sender.New(p.r, p.w, &write),
 		ctx:    c,
-		layout: p.layout,
-		l:      p.layout.factories[Main],
+		route:  p.matchedRoute,
 	}
 	c.state = createState(c.Cache(), c.Cookie())
 	return c
@@ -206,7 +202,11 @@ func (c *ctx) Parse() parser.Parse {
 }
 
 func (c *ctx) Request() Request {
-	return request{c.r, c.route}
+	return request{
+		r:            c.r,
+		route:        c.route,
+		componentCtx: c.component,
+	}
 }
 
 func (c *ctx) Response() Response {
@@ -218,13 +218,6 @@ func (c *ctx) Translate(key string, args ...map[string]any) string {
 		return key
 	}
 	return c.config.Localization.Translator.Translate(c.Lang().Current(), key, args...)
-}
-
-func (c *ctx) Tempest() tempest.Class {
-	if c.config.Tempest == nil {
-		return nil
-	}
-	return c.tempest.Class()
 }
 
 func (c *ctx) createCookiePathBasedOnRouterCookiePrefix() string {

@@ -72,7 +72,7 @@ func marginClass(selector string, value string) string {
 
 func marginXAxisClass(selector string, value string) string {
 	return fmt.Sprintf(
-		`%s{margin-left: %[1]s;margin-right: %[1]s;}`,
+		`%s{margin-left: %[2]s;margin-right: %[2]s;}`,
 		selector,
 		value,
 	)
@@ -80,7 +80,7 @@ func marginXAxisClass(selector string, value string) string {
 
 func marginYAxisClass(selector string, value string) string {
 	return fmt.Sprintf(
-		`%s{margin-top: %[1]s;margin-bottom: %[1]s;}`,
+		`%s{margin-top: %[2]s;margin-bottom: %[2]s;}`,
 		selector,
 		value,
 	)

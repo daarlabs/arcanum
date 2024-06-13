@@ -333,7 +333,7 @@ func FontFamily(values ...string) Node {
 	return createAttribute(attributeFontFamily, values...)
 }
 
-func FontSize(values ...string) Node {
+func TextSize(values ...string) Node {
 	return createAttribute(attributeFontSize, values...)
 }
 

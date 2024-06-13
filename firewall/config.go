@@ -1,6 +1,10 @@
 package firewall
 
-import "regexp"
+import (
+	"regexp"
+	
+	"github.com/daarlabs/arcanum/auth"
+)
 
 type Config interface {
 }
@@ -67,7 +71,7 @@ func Redirect(redirect string) Config {
 	}
 }
 
-func Roles(roles ...Role) Config {
+func Roles(roles ...auth.Role) Config {
 	return &config{
 		name:  configRole,
 		value: roles,

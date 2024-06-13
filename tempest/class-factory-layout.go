@@ -48,31 +48,31 @@ func topClass(selector string, value string) string {
 	return fmt.Sprintf(
 		`%s{top: %s;}`,
 		selector,
-		value,
+		transformKeywordToValue("", value),
 	)
 }
 
 func rightClass(selector string, value string) string {
 	return fmt.Sprintf(
-		`%s{top: %s;}`,
+		`%s{right: %s;}`,
 		selector,
-		value,
+		transformKeywordToValue("", value),
 	)
 }
 
 func bottomClass(selector string, value string) string {
 	return fmt.Sprintf(
-		`%s{top: %s;}`,
+		`%s{bottom: %s;}`,
 		selector,
-		value,
+		transformKeywordToValue("", value),
 	)
 }
 
 func leftClass(selector string, value string) string {
 	return fmt.Sprintf(
-		`%s{top: %s;}`,
+		`%s{left: %s;}`,
 		selector,
-		value,
+		transformKeywordToValue("", value),
 	)
 }
 
@@ -80,7 +80,7 @@ func insetClass(selector string, value string) string {
 	return fmt.Sprintf(
 		`%s{top: %[2]s;right: %[2]s;bottom: %[2]s;left: %[2]s;}`,
 		selector,
-		value,
+		transformKeywordToValue("", value),
 	)
 }
 
@@ -88,13 +88,29 @@ func insetXAxisClass(selector string, value string) string {
 	return fmt.Sprintf(
 		`%s{right: %[2]s;left: %[2]s;}`,
 		selector,
-		value,
+		transformKeywordToValue("", value),
 	)
 }
 
 func insetYAxisClass(selector string, value string) string {
 	return fmt.Sprintf(
 		`%s{top: %[2]s;bottom: %[2]s;}`,
+		selector,
+		transformKeywordToValue("", value),
+	)
+}
+
+func zIndexClass(selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{z-index: %s;}`,
+		selector,
+		value,
+	)
+}
+
+func visibilityClass(selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{visibility: %s;}`,
 		selector,
 		value,
 	)

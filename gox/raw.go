@@ -1,8 +1,10 @@
 package gox
 
-func Raw(html string) Node {
+import "strings"
+
+func Raw(html ...string) Node {
 	return node{
 		nodeType: nodeRaw,
-		value:    html,
+		value:    strings.Join(html, "\n"),
 	}
 }

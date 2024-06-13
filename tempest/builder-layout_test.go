@@ -14,7 +14,7 @@ func TestLayoutBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				containerClass(DefaultBreakpoints, DefaultContainer),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -25,7 +25,7 @@ func TestLayoutBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				topClass(".top-4", "1rem"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)
@@ -36,7 +36,7 @@ func TestLayoutBuilder(t *testing.T) {
 			assert.Equal(
 				t,
 				topClass(".top-1px", "1px"),
-				c.Tempest.classes[class],
+				c.Core.classes[class],
 			)
 		},
 	)

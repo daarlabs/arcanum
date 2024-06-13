@@ -1,10 +1,10 @@
 package tempest
 
 type TransitionClass interface {
-	Transition(modifiers ...Modifier) Class
+	Transition(modifiers ...Modifier) Tempest
 }
 
-func (b *Builder) Transition(modifiers ...Modifier) Class {
+func (b *Builder) Transition(modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
 			prefix:    "transition",

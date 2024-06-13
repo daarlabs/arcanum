@@ -19,13 +19,13 @@ type Builder struct {
 }
 
 const (
-	defaultBodyLimit = 256
+	DefaultBodyLimit = 256
 )
 
 func New(fields ...*FieldBuilder) *Builder {
 	return &Builder{
 		fields:   fields,
-		limit:    defaultBodyLimit,
+		limit:    DefaultBodyLimit,
 		messages: defaultMessages,
 	}
 }

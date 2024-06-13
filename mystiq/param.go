@@ -14,7 +14,7 @@ type Param struct {
 	Offset   int
 	Limit    int
 	Order    []string
-	Columns  Columns
+	Fields   Fields
 }
 
 type OrderParam struct {
@@ -22,7 +22,7 @@ type OrderParam struct {
 	Direction string
 }
 
-type Columns struct {
+type Fields struct {
 	Fulltext []string
 	Order    map[string]string
 }
@@ -36,8 +36,8 @@ func (p Param) Parse(c mirage.Ctx) Param {
 }
 
 func (p Param) Use(q *quirk.Quirk) {
-	useFulltextParam(q, p.Fulltext, p.Columns.Fulltext)
-	useOrderParam(q, p.Order, p.Columns.Order)
+	useFulltextParam(q, p.Fulltext, p.Fields.Fulltext)
+	useOrderParam(q, p.Order, p.Fields.Order)
 	useOffsetParam(q, p.Offset)
 	useLimitParam(q, p.Limit)
 }

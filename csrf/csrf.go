@@ -18,6 +18,9 @@ type Csrf interface {
 	Destroy(token Token) error
 	Clean(ignore string) error
 	
+	IsEnabled() bool
+	GetExpiration() time.Duration
+	
 	MustExists(name, value string) bool
 	MustGet(name, value string) Token
 	MustCreate(token Token) string
@@ -73,6 +76,14 @@ func New(configs ...Config) Csrf {
 		}
 	}
 	return r
+}
+
+func (c *csrf) IsEnabled() bool {
+	return c.Enabled
+}
+
+func (c *csrf) GetExpiration() time.Duration {
+	return c.Expiration
 }
 
 func (c *csrf) Exists(name, value string) (bool, error) {
