@@ -333,6 +333,9 @@ func (u *userManager) readData(operation string, data User, columns []string) er
 }
 
 func (u *userManager) hashPassword(password string) (string, error) {
+	if strings.HasPrefix(password, "$argon2") {
+		return password, nil
+	}
 	hash, err := argon.HashEncoded([]byte(password))
 	if err != nil {
 		return "", err

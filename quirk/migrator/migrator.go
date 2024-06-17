@@ -3,6 +3,7 @@ package migrator
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"slices"
 	"time"
@@ -114,6 +115,7 @@ func (m *migrator) New() {
 }
 
 func (m *migrator) Up() {
+	defer m.recoverError()
 	existingMigrationsNames := m.getExistingMigrationsNames()
 	for _, db := range m.databases {
 		db.MustBegin()
@@ -138,6 +140,7 @@ func (m *migrator) Up() {
 }
 
 func (m *migrator) Down() {
+	defer m.recoverError()
 	lastMigrationName := m.getLastMigrationName()
 	for _, db := range m.databases {
 		db.MustBegin()
@@ -158,6 +161,15 @@ func (m *migrator) Down() {
 			continue
 		}
 		fmt.Printf("Down successful [%s]!\n", item.name)
+	}
+}
+
+func (m *migrator) recoverError() {
+	if err := recover(); err != nil {
+		for _, db := range m.databases {
+			_ = db.Rollback()
+		}
+		log.Fatalln(err)
 	}
 }
 
