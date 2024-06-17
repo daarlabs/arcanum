@@ -58,7 +58,7 @@ func (l *lang) Main() string {
 		ml = item
 		break
 	}
-	if len(ml.Code) == 0 {
+	if len(ml.Code) == 0 && len(l.config.Localization.Languages) > 0 {
 		ml = l.config.Localization.Languages[0]
 	}
 	return ml.Code

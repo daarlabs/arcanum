@@ -99,7 +99,9 @@ func createContext(p ctxParam) *ctx {
 			csrf.Expiration(c.config.Security.Csrf.GetExpiration()),
 		)
 	}
-	c.lang = createLang(c.Config(), c.Request(), c.Cookie())
+	if c.config.Localization.Enabled {
+		c.lang = createLang(c.Config(), c.Request(), c.Cookie())
+	}
 	c.response = &response{
 		Sender: sender.New(p.r, p.w, &write),
 		ctx:    c,
