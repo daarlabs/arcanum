@@ -69,6 +69,10 @@ func (g *generator) Action(name string, args ...Map) string {
 		return ""
 	}
 	qpm := Map{Action: g.route.Name + namePrefixDivider + g.component.name + namePrefixDivider + name}
+	parsed := g.Request().Parsed()
+	for k, v := range parsed {
+		qpm[k] = v
+	}
 	if len(args) > 0 {
 		for k, v := range args[0] {
 			vv := reflect.ValueOf(v)
@@ -144,6 +148,9 @@ func (g *generator) Query(args Map) string {
 			result = append(result, fmt.Sprintf("%s=%v", k, v))
 		}
 	}
+	if len(result) == 0 {
+		return ""
+	}
 	return "?" + strings.Join(result, "&")
 }
 
@@ -187,11 +194,19 @@ func (g *generator) proxyPathIfExists(path string) string {
 }
 
 func (g *generator) replacePathParamsWithArgs(path string, args ...Map) string {
-	if len(args) == 0 {
+	replaceArgs := g.Request().Parsed()
+	argsExists := len(args) > 0
+	replaceArgsExists := len(replaceArgs) > 0
+	if !argsExists && !replaceArgsExists {
 		return path
 	}
+	if argsExists {
+		for k, v := range args[0] {
+			replaceArgs[k] = v
+		}
+	}
 	replace := make([]string, 0)
-	for k, v := range args[0] {
+	for k, v := range replaceArgs {
 		replace = append(replace, "{"+k+"}", fmt.Sprintf("%v", v))
 	}
 	r := strings.NewReplacer(replace...)

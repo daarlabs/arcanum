@@ -184,15 +184,17 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 	if len(r.prefix.Name) > 0 {
 		name = r.prefix.Name + namePrefixDivider + name
 	}
+	matcher, pathValues := r.createMatcher(path)
 	*r.routes = append(
 		*r.routes, &Route{
-			Lang:     lang,
-			Path:     path,
-			Name:     name,
-			Methods:  methods,
-			Layout:   r.core.layout.factories[layout],
-			Matcher:  r.createMatcher(path),
-			Firewall: r.createFirewall(path, name),
+			Lang:       lang,
+			Path:       path,
+			Name:       name,
+			Methods:    methods,
+			Layout:     r.core.layout.factories[layout],
+			Matcher:    matcher,
+			PathValues: pathValues,
+			Firewall:   r.createFirewall(path, name),
 		},
 	)
 	for _, method := range methods {
@@ -226,12 +228,14 @@ func (r *router) createRoutePattern(method, path string) string {
 	return method + " " + r.formatPatternPath(path)
 }
 
-func (r *router) createMatcher(path string) *regexp.Regexp {
+func (r *router) createMatcher(path string) (*regexp.Regexp, []string) {
 	parts := strings.Split(path, "/")
 	res := make([]string, len(parts))
+	pathValues := make([]string, 0)
 	for i, part := range parts {
 		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
 			res[i] = paramRegex
+			pathValues = append(pathValues, part[1:len(part)-1])
 			continue
 		}
 		res[i] = part
@@ -240,7 +244,7 @@ func (r *router) createMatcher(path string) *regexp.Regexp {
 	if !strings.HasSuffix(p, "/") {
 		p += "/"
 	}
-	return regexp.MustCompile("^" + p + "$")
+	return regexp.MustCompile("^" + p + "$"), pathValues
 }
 
 func (r *router) formatPatternPath(path string) string {

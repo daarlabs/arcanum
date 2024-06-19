@@ -60,6 +60,7 @@ type ctx struct {
 	lang             *lang
 	component        *componentCtx
 	write            *bool
+	parsed           Map
 }
 
 type ctxParam struct {
@@ -89,6 +90,7 @@ func createContext(p ctxParam) *ctx {
 		w:                p.w,
 		assets:           p.assets,
 		write:            &write,
+		parsed:           make(Map),
 	}
 	c.cookie = cookie.New(c.r, c.w, c.createCookiePathBasedOnRouterCookiePrefix())
 	if c.config.Security.Csrf != nil && c.config.Security.Csrf.IsEnabled() {
@@ -108,6 +110,12 @@ func createContext(p ctxParam) *ctx {
 		route:  p.matchedRoute,
 	}
 	c.state = createState(c.Cache(), c.Cookie())
+	if p.matchedRoute != nil {
+		for _, pathValueKey := range p.matchedRoute.PathValues {
+			c.parsed[pathValueKey] = c.r.PathValue(pathValueKey)
+		}
+	}
+	c.parsePathValues()
 	return c
 }
 
@@ -200,7 +208,7 @@ func (c *ctx) Page() Page {
 }
 
 func (c *ctx) Parse() parser.Parse {
-	return parser.New(c.r, []byte{}, c.config.Parser.Limit)
+	return parser.New(c.r, c.config.Parser.Limit)
 }
 
 func (c *ctx) Request() Request {
@@ -208,6 +216,7 @@ func (c *ctx) Request() Request {
 		r:            c.r,
 		route:        c.route,
 		componentCtx: c.component,
+		parsed:       c.parsed,
 	}
 }
 
@@ -227,4 +236,13 @@ func (c *ctx) createCookiePathBasedOnRouterCookiePrefix() string {
 		return c.config.Router.Prefix.Cookie
 	}
 	return "/"
+}
+
+func (c *ctx) parsePathValues() {
+	if c.route == nil {
+		return
+	}
+	for _, pathValueKey := range c.route.PathValues {
+		c.parsed[pathValueKey] = c.r.PathValue(pathValueKey)
+	}
 }

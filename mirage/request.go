@@ -20,6 +20,7 @@ type Request interface {
 	Method() string
 	Name() string
 	Origin() string
+	Parsed() Map
 	Path() string
 	PathValue(key string, defaultValue ...string) string
 	QueryParam(key string, defaultValue ...string) string
@@ -47,6 +48,7 @@ type request struct {
 	r            *http.Request
 	componentCtx *componentCtx
 	route        *Route
+	parsed       Map
 }
 
 type requestIs struct {
@@ -100,6 +102,10 @@ func (r request) Name() string {
 
 func (r request) Origin() string {
 	return r.r.Header.Get(header.Origin)
+}
+
+func (r request) Parsed() Map {
+	return r.parsed
 }
 
 func (r request) Path() string {

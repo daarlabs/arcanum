@@ -46,13 +46,6 @@ func (f factory) Form(fields ...*form.FieldBuilder) *form.Builder {
 		method = http.MethodPost
 	}
 	link := f.ctx.Generate().Link(f.ctx.route.Name)
-	if len(f.ctx.Request().Raw().URL.Query()) > 0 {
-		q := make(Map)
-		for k := range f.ctx.Request().Raw().URL.Query() {
-			q[k] = f.ctx.Request().Raw().URL.Query().Get(k)
-		}
-		link += f.ctx.Generate().Query(q)
-	}
 	r := form.New(fields...).
 		Limit(f.ctx.Config().Form.Limit).
 		Method(method).
@@ -70,7 +63,7 @@ func (f factory) Form(fields ...*form.FieldBuilder) *form.Builder {
 				Invalid:   f.ctx.Translate(f.ctx.config.Localization.Form.Invalid),
 			},
 		)
-	if isCsrfEnabled && !f.ctx.Request().Is().Action() {
+	if isCsrfEnabled && !f.ctx.Request().Is().Action() && !f.ctx.Auth().Session().MustExists() {
 		name := fmt.Sprintf("%s-%s", f.ctx.route.Name, uniuri.New())
 		token := f.ctx.Csrf().MustCreate(
 			csrf.Token{

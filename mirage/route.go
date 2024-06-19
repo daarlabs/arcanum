@@ -12,13 +12,14 @@ type RouteConfig struct {
 }
 
 type Route struct {
-	Lang     string
-	Path     string
-	Name     string
-	Layout   layoutFactory
-	Matcher  *regexp.Regexp
-	Methods  []string
-	Firewall []firewall.Firewall
+	Lang       string
+	Path       string
+	Name       string
+	Layout     layoutFactory
+	Matcher    *regexp.Regexp
+	Methods    []string
+	Firewall   []firewall.Firewall
+	PathValues []string
 }
 
 const (

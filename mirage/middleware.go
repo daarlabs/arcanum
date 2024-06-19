@@ -68,6 +68,9 @@ func createCsrfMiddleware() Handler {
 			}
 			return c.Continue()
 		}
+		if c.Auth().Session().MustExists() {
+			return c.Continue()
+		}
 		token := c.Request().Form().Get(form.CsrfToken)
 		name := c.Request().Form().Get(form.CsrfName)
 		if len(token) == 0 {

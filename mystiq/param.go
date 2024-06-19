@@ -31,7 +31,7 @@ func (p Param) Parse(c mirage.Ctx) Param {
 	c.Parse().MustQuery(Fulltext, &p.Fulltext)
 	c.Parse().MustQuery(Offset, &p.Offset)
 	c.Parse().MustQuery(Limit, &p.Limit)
-	c.Parse().Many().MustQuery(Order, &p.Order)
+	c.Parse().Multiple().MustQuery(Order, &p.Order)
 	return p
 }
 

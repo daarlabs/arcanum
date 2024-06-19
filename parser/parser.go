@@ -21,7 +21,7 @@ type Parse interface {
 	Text() (string, error)
 	Xml(target any) error
 	Url(target any) error
-	Many() Parse
+	Multiple() Parse
 	
 	MustQuery(key string, target any)
 	MustPathValue(key string, target any)
@@ -34,22 +34,20 @@ type Parse interface {
 }
 
 type Parser struct {
-	r     *http.Request
-	bytes []byte
-	limit int64
-	many  bool
+	r        *http.Request
+	limit    int64
+	multiple bool
 }
 
-func New(r *http.Request, defaultBytes []byte, limit int64) *Parser {
+func New(r *http.Request, limit int64) *Parser {
 	return &Parser{
 		r:     r,
-		bytes: defaultBytes,
 		limit: limit,
 	}
 }
 
-func (p *Parser) Many() Parse {
-	p.many = true
+func (p *Parser) Multiple() Parse {
+	p.multiple = true
 	return p
 }
 
@@ -60,10 +58,10 @@ func (p *Parser) Query(key string, target any) error {
 		return nil
 	}
 	n := len(qv)
-	if !p.many && n == 1 {
+	if !p.multiple && n == 1 {
 		return util.ConvertValue(qv[0], target)
 	}
-	if p.many || n > 1 {
+	if p.multiple || n > 1 {
 		return util.ConvertSlice(qv, target)
 	}
 	return nil
@@ -81,7 +79,10 @@ func (p *Parser) PathValue(key string, target any) error {
 	if len(pathValue) == 0 {
 		return ErrorPathValueMissing
 	}
-	return util.ConvertValue(pathValue, target)
+	if err := util.ConvertValue(pathValue, target); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Parser) MustPathValue(key string, target any) {
@@ -118,9 +119,6 @@ func (p *Parser) MustUrl(target any) {
 }
 
 func (p *Parser) Text() (string, error) {
-	if len(p.bytes) > 0 {
-		return string(p.bytes), nil
-	}
 	if p.r.Body == nil {
 		return "", nil
 	}
@@ -137,9 +135,6 @@ func (p *Parser) MustText() string {
 }
 
 func (p *Parser) Json(target any) error {
-	if len(p.bytes) > 0 {
-		return json.Unmarshal(p.bytes, target)
-	}
 	if p.r.Body == nil {
 		return nil
 	}
@@ -158,9 +153,6 @@ func (p *Parser) MustJson(target any) {
 }
 
 func (p *Parser) Xml(value any) error {
-	if len(p.bytes) > 0 {
-		return xml.Unmarshal(p.bytes, value)
-	}
 	if p.r.Body == nil {
 		return nil
 	}
@@ -175,9 +167,6 @@ func (p *Parser) MustXml(target any) {
 }
 
 func (p *Parser) File(filename string) (form.Multipart, error) {
-	if len(p.bytes) > 0 {
-		return form.Multipart{}, nil
-	}
 	err := p.parseMultipartForm()
 	if err != nil {
 		return form.Multipart{}, err
@@ -201,9 +190,6 @@ func (p *Parser) MustFile(filename string) form.Multipart {
 }
 
 func (p *Parser) Files(filesname ...string) ([]form.Multipart, error) {
-	if len(p.bytes) > 0 {
-		return []form.Multipart{}, nil
-	}
 	err := p.parseMultipartForm()
 	if err != nil {
 		return []form.Multipart{}, err

@@ -71,7 +71,7 @@ func (s sessionManager) Token() string {
 func (s sessionManager) Exists() (bool, error) {
 	token := s.Token()
 	if len(token) == 0 {
-		return false, ErrorMissingSessionCookie
+		return false, nil
 	}
 	return len(token) > 0 && s.cache.Exists(createSessionCacheKey(token)), nil
 }

@@ -2,6 +2,7 @@ package alpine
 
 import (
 	"encoding/json"
+	"strings"
 	
 	"github.com/daarlabs/arcanum/gox"
 )
@@ -46,6 +47,16 @@ func Bind(name string, value ...string) gox.Node {
 		return gox.CreateAttribute[string](":" + name)(value[0])
 	}
 	return gox.CreateAttribute[string](":" + name)(name)
+}
+
+func Class(value map[string]string) gox.Node {
+	result := make([]string, len(value))
+	i := 0
+	for k, v := range value {
+		result[i] = `"` + k + `": ` + v
+		i++
+	}
+	return Bind("class", `{`+strings.Join(result, `,`)+`}`)
 }
 
 func Text(value string) gox.Node {
