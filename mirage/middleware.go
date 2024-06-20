@@ -31,7 +31,7 @@ func createLangMiddleware() Handler {
 			mainLang := c.Lang().Main()
 			c.Cookie().Set(langCookieKey, mainLang, langCookieDuration)
 			if cfg.Path {
-				return c.Response().Redirect("/" + mainLang + "/")
+				return c.Response().Status(http.StatusMovedPermanently).Redirect("/" + mainLang + "/")
 			}
 		}
 		if len(c.Request().QueryParam(langQueryKey)) > 0 {

@@ -197,7 +197,7 @@ func (m *mystiq) getOneWithDb(name string, v any, t any) error {
 		fields = append(fields, key+" AS "+alias)
 	}
 	q := m.db.Q("SELECT "+m.createFields()).
-		Q(`FROM `+m.query.Table).
+		Q(fmt.Sprintf("FROM %s AS %s", m.query.Table, m.query.Alias)).
 		Q(fmt.Sprintf(`WHERE %[1]s = @%[1]s`, name), quirk.Map{name: v}).
 		Q(`LIMIT 1`)
 	return q.Exec(t)

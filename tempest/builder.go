@@ -13,6 +13,7 @@ type ClassComposition interface {
 	BorderClass
 	DisplayClass
 	EffectClass
+	FilterClass
 	FlexClass
 	GridClass
 	InteractivityClass

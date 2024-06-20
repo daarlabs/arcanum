@@ -52,6 +52,6 @@ func trailingSlashMiddleware() Handler {
 		if strings.HasSuffix(path, "/") {
 			return c.Continue()
 		}
-		return c.Send().Redirect(path + "/")
+		return c.Send().Status(http.StatusMovedPermanently).Redirect(path + "/")
 	}
 }

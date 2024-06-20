@@ -47,7 +47,7 @@ a:not(.underline) {
 	opacity: 0;
 }
 
-.htmx-request .indicator, .htmx-request.indicator, .form-submit .indicator {
+.htmx-request .indicator, .htmx-request.indicator, .htmx-request ~ .indicator, .form-request .indicator, .form-request.indicator {
 	visibility: visible;
 	opacity: 1;
 }

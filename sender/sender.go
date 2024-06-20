@@ -153,7 +153,7 @@ func (s *Sender) Redirect(url string) error {
 	}
 	s.Value = url
 	if s.StatusCode == http.StatusOK {
-		s.StatusCode = http.StatusMovedPermanently
+		s.StatusCode = http.StatusFound
 	}
 	s.DataType = dataType.Redirect
 	return nil

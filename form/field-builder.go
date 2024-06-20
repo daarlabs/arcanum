@@ -2,6 +2,7 @@ package form
 
 import (
 	"fmt"
+	"strings"
 	"time"
 	
 	"golang.org/x/exp/constraints"
@@ -58,6 +59,7 @@ const (
 	fieldDataTypeFile   = "file"
 	fieldDataTypeFloat  = "float"
 	fieldDataTypeInt    = "int"
+	fieldDataTypeInt64  = "int64"
 	fieldDataTypeString = "string"
 	fieldDataTypeTime   = "time"
 	
@@ -66,7 +68,7 @@ const (
 
 func Add(name string) *FieldBuilder {
 	return &FieldBuilder{
-		name:       name,
+		name:       strings.ReplaceAll(name, "_", "-"),
 		validators: make([]validator, 0),
 	}
 }
@@ -107,6 +109,8 @@ func (b *FieldBuilder) With(config FieldConfig, validators ...Validator) *FieldB
 		createFieldType[string](b, config.fieldType, config.dataType, config.value.([]string)...)
 	case []int:
 		createFieldType[int](b, config.fieldType, config.dataType, config.value.([]int)...)
+	case []int64:
+		createFieldType[int64](b, config.fieldType, config.dataType, config.value.([]int64)...)
 	case []float32:
 		createFieldType[float32](b, config.fieldType, config.dataType, config.value.([]float32)...)
 	case []float64:
@@ -157,18 +161,18 @@ func Color(value ...string) FieldConfig {
 	}
 }
 
-func Date(value ...string) FieldConfig {
+func Date(value ...time.Time) FieldConfig {
 	return FieldConfig{
 		fieldType: fieldTypeDate,
-		dataType:  fieldDataTypeString,
+		dataType:  fieldDataTypeTime,
 		value:     value,
 	}
 }
 
-func DateTimeLocal(value ...string) FieldConfig {
+func DateTimeLocal(value ...time.Time) FieldConfig {
 	return FieldConfig{
 		fieldType: fieldTypeDateTimeLocal,
-		dataType:  fieldDataTypeString,
+		dataType:  fieldDataTypeTime,
 		value:     value,
 	}
 }
@@ -196,6 +200,8 @@ func Hidden[T comparable](value ...T) FieldConfig {
 		dataType = fieldDataTypeFloat
 	case int:
 		dataType = fieldDataTypeInt
+	case int64:
+		dataType = fieldDataTypeInt64
 	case string:
 		dataType = fieldDataTypeString
 	case bool:
@@ -219,7 +225,7 @@ func Image(value ...string) FieldConfig {
 }
 
 func (b *FieldBuilder) Id(id string) *FieldBuilder {
-	b.id = id
+	b.id = strings.ReplaceAll(id, "_", "-")
 	return b
 }
 
@@ -242,6 +248,12 @@ func (b *FieldBuilder) Multiple(size ...int) *FieldBuilder {
 func Number[T constraints.Float | constraints.Integer](value ...T) FieldConfig {
 	v := *new(T)
 	switch any(v).(type) {
+	case int64:
+		return FieldConfig{
+			fieldType: fieldTypeNumber,
+			dataType:  fieldDataTypeInt64,
+			value:     value,
+		}
 	case int:
 		return FieldConfig{
 			fieldType: fieldTypeNumber,

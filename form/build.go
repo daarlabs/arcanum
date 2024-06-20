@@ -104,6 +104,17 @@ func buildFormField(formRef reflect.Value, fb *FieldBuilder, req *http.Request) 
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
+	case fieldDataTypeInt64:
+		if fb.multiple {
+			field := createFormField[[]int64](fb, req)
+			formField.Set(reflect.ValueOf(field))
+			return field.Messages
+		}
+		if !fb.multiple {
+			field := createFormField[int64](fb, req)
+			formField.Set(reflect.ValueOf(field))
+			return field.Messages
+		}
 	case fieldDataTypeBool:
 		if fb.multiple {
 			field := createFormField[[]bool](fb, req)

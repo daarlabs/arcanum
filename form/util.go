@@ -36,6 +36,14 @@ func convertToInt(v string) int {
 	return r
 }
 
+func convertToInt64(v string) int64 {
+	r, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return r
+}
+
 func convertToFloat(v string) float64 {
 	r, err := strconv.ParseFloat(v, 64)
 	if err != nil {

@@ -68,7 +68,7 @@ func (g *generator) Action(name string, args ...Map) string {
 	if g.component == nil {
 		return ""
 	}
-	qpm := Map{Action: g.route.Name + namePrefixDivider + g.component.name + namePrefixDivider + name}
+	qpm := Map{Action: createDividedName(g.route.Name, g.component.name, name)}
 	parsed := g.Request().Parsed()
 	for k, v := range parsed {
 		qpm[k] = v

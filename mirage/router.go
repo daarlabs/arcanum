@@ -140,7 +140,7 @@ func (r *router) createCanonicalRoute(path string, lang string, config ...RouteC
 	}
 	path = r.prefixPathWithLangIfEnabled(path, lang)
 	if len(r.prefix.Name) > 0 {
-		name = r.prefix.Name + namePrefixDivider + name
+		name = createDividedName(r.prefix.Name, name)
 	}
 	for _, method := range methods {
 		r.mux.HandleFunc(
@@ -182,7 +182,7 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 	}
 	path = r.prefixPathWithLangIfEnabled(path, lang)
 	if len(r.prefix.Name) > 0 {
-		name = r.prefix.Name + namePrefixDivider + name
+		name = createDividedName(r.prefix.Name, name)
 	}
 	matcher, pathValues := r.createMatcher(path)
 	*r.routes = append(

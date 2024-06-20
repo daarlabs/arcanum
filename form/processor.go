@@ -68,6 +68,17 @@ func processFormData(form *Builder, data url.Values) {
 						},
 					)
 				}
+			case fieldDataTypeInt64:
+				if !field.multiple {
+					form.fields[i].value = convertToInt(item[0])
+				}
+				if field.multiple {
+					form.fields[i].value = convertSlice[string, int64](
+						item, func(v string) int64 {
+							return convertToInt64(v)
+						},
+					)
+				}
 			case fieldDataTypeTime:
 				if !field.multiple {
 					t, _ := time.Parse(fieldTimeFormat, item[0])

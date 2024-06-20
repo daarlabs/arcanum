@@ -1,6 +1,9 @@
 package form
 
-import "github.com/daarlabs/arcanum/gox"
+import (
+	"github.com/daarlabs/arcanum/alpine"
+	"github.com/daarlabs/arcanum/gox"
+)
 
 type Form struct {
 	Security    security
@@ -23,5 +26,8 @@ func (f Form) Node(nodes ...gox.Node) gox.Node {
 		gox.EncType(f.ContentType),
 		gox.If(f.Security.Enabled, Csrf(f.Security.Name, f.Security.Token)),
 		gox.Fragment(nodes...),
+		alpine.Data(map[string]any{"submitting": false}),
+		alpine.Class(map[string]string{"form-request": "submitting"}),
+		alpine.Submit("submitting = true"),
 	)
 }

@@ -139,5 +139,5 @@ func (c *component) save() {
 }
 
 func (c *component) getFullname() string {
-	return c.route.Name + namePrefixDivider + c.ct.Name()
+	return createDividedName(c.route.Name, c.ct.Name())
 }
