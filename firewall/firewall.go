@@ -96,7 +96,7 @@ func (f *Firewall) Match(path string) bool {
 
 func (f *Firewall) MatchPath(path string) bool {
 	for _, firewallPath := range f.Paths {
-		if len(path) > 0 && strings.HasPrefix(firewallPath, path) {
+		if len(path) > 0 && strings.HasPrefix(path, firewallPath) {
 			return true
 		}
 	}
@@ -105,7 +105,7 @@ func (f *Firewall) MatchPath(path string) bool {
 
 func (f *Firewall) MatchGroup(group string) bool {
 	for _, firewallGroup := range f.Groups {
-		if len(group) > 0 && strings.HasPrefix(firewallGroup, group) {
+		if len(group) > 0 && strings.HasPrefix(group, firewallGroup) {
 			return true
 		}
 	}

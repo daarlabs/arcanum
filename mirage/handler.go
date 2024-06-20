@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"strings"
 	
+	"github.com/daarlabs/arcanum/devtool"
+	"github.com/daarlabs/arcanum/env"
+	"github.com/daarlabs/arcanum/gox"
 	"github.com/daarlabs/arcanum/util/constant/contentType"
 	"github.com/daarlabs/arcanum/util/constant/dataType"
 	"github.com/daarlabs/arcanum/util/constant/header"
@@ -121,12 +124,18 @@ func (h handler) createRecover(c *ctx) {
 		err, ok := e.(error)
 		if !ok {
 			http.Error(c.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
 		if c.response.StatusCode == http.StatusOK || c.response.StatusCode == http.StatusBadRequest {
 			c.response.StatusCode = http.StatusInternalServerError
 		}
 		c.err = err
-		err = h.core.errorHandler(c)
+		if env.Development() {
+			err = c.Response().Html(gox.Render(devtool.CreateRecoverPage(c.Generate().Assets(), err)))
+		}
+		if !env.Development() {
+			err = h.core.errorHandler(c)
+		}
 		c.err = nil
 		if err != nil {
 			c.err = err
