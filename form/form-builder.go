@@ -16,6 +16,7 @@ type Builder struct {
 	hx          bool
 	security    security
 	messages    Messages
+	state       state
 }
 
 const (
@@ -109,6 +110,11 @@ func (b *Builder) Request(request *http.Request) *Builder {
 
 func (b *Builder) Hx() *Builder {
 	b.hx = true
+	return b
+}
+
+func (b *Builder) State(state state) *Builder {
+	b.state = state
 	return b
 }
 

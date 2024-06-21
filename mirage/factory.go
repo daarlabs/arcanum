@@ -51,6 +51,7 @@ func (f factory) Form(fields ...*form.FieldBuilder) *form.Builder {
 		Method(method).
 		Action(link).
 		Request(f.ctx.r).
+		State(f.ctx.state).
 		Messages(
 			form.Messages{
 				Email:     f.ctx.Translate(f.ctx.config.Localization.Form.Email),

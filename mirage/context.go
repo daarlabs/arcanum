@@ -37,6 +37,7 @@ type Ctx interface {
 	Parse() parser.Parse
 	Request() Request
 	Response() Response
+	State() State
 	Translate(key string, args ...map[string]any) string
 }
 
@@ -222,6 +223,10 @@ func (c *ctx) Request() Request {
 
 func (c *ctx) Response() Response {
 	return c.response
+}
+
+func (c *ctx) State() State {
+	return c.state
 }
 
 func (c *ctx) Translate(key string, args ...map[string]any) string {

@@ -11,22 +11,27 @@ import (
 	"strings"
 	
 	"github.com/daarlabs/arcanum/gox"
+	"github.com/daarlabs/arcanum/mjml"
 )
 
 type Mailer interface {
 	Attachment(name string, data []byte) Mailer
 	Body(nodes ...gox.Node) Mailer
-	Bytes() []byte
+	Bytes() ([]byte, error)
 	Copy(values ...string) Mailer
 	From(from string) Mailer
 	HiddenCopy(values ...string) Mailer
+	Html() Mailer
+	Mjml() Mailer
+	Send() error
+	String() (string, error)
 	Subject(subject string) Mailer
 	Title(title string) Mailer
 	To(to ...string) Mailer
-	Send() error
-	String() string
 	
 	MustSend()
+	MustBytes() []byte
+	MustString() string
 }
 
 type mailer struct {
@@ -38,6 +43,7 @@ type mailer struct {
 	toHiddenCopy []string
 	subject      string
 	title        string
+	renderType   string
 	nodes        []gox.Node
 }
 
@@ -46,8 +52,13 @@ type attachment struct {
 	data []byte
 }
 
+const (
+	renderHtml = "html"
+	renderMjml = "mjml"
+)
+
 func New(config Config) Mailer {
-	return &mailer{config: config}
+	return &mailer{config: config, renderType: renderMjml}
 }
 
 func (m *mailer) Attachment(name string, data []byte) Mailer {
@@ -60,8 +71,16 @@ func (m *mailer) Body(nodes ...gox.Node) Mailer {
 	return m
 }
 
-func (m *mailer) Bytes() []byte {
+func (m *mailer) Bytes() ([]byte, error) {
 	return m.createBody()
+}
+
+func (m *mailer) MustBytes() []byte {
+	b, err := m.Bytes()
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 func (m *mailer) Copy(values ...string) Mailer {
@@ -79,13 +98,27 @@ func (m *mailer) HiddenCopy(values ...string) Mailer {
 	return m
 }
 
+func (m *mailer) Html() Mailer {
+	m.renderType = renderHtml
+	return m
+}
+
+func (m *mailer) Mjml() Mailer {
+	m.renderType = renderMjml
+	return m
+}
+
 func (m *mailer) Send() error {
+	body, err := m.createBody()
+	if err != nil {
+		return err
+	}
 	return smtp.SendMail(
 		fmt.Sprintf("%s:%d", m.config.Host, m.config.Port),
 		smtp.PlainAuth("", m.config.User, m.config.Password, m.config.Host),
 		m.from,
 		m.to,
-		m.createBody(),
+		body,
 	)
 }
 
@@ -96,8 +129,17 @@ func (m *mailer) MustSend() {
 	}
 }
 
-func (m *mailer) String() string {
-	return string(m.createBody())
+func (m *mailer) String() (string, error) {
+	body, err := m.createBody()
+	return string(body), err
+}
+
+func (m *mailer) MustString() string {
+	s, err := m.String()
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
 
 func (m *mailer) Subject(value string) Mailer {
@@ -115,7 +157,7 @@ func (m *mailer) To(values ...string) Mailer {
 	return m
 }
 
-func (m *mailer) createBody() []byte {
+func (m *mailer) createBody() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	attachmentsExist := len(m.attachments) > 0
 	buf.WriteString(fmt.Sprintf("From: %s\r\n", m.from))
@@ -137,7 +179,16 @@ func (m *mailer) createBody() []byte {
 		buf.WriteString(fmt.Sprintf("Content-Type: multipart/mixed; boundary=%s\n", boundary))
 		buf.WriteString(fmt.Sprintf("--%s\n", boundary))
 	}
-	buf.WriteString(gox.Render(m.nodes...))
+	if m.renderType == renderHtml {
+		buf.WriteString(gox.Render(m.nodes...))
+	}
+	if m.renderType == renderMjml {
+		htmlContent, err := mjml.Render(m.nodes...)
+		if err != nil {
+			return []byte{}, err
+		}
+		buf.WriteString(htmlContent)
+	}
 	if attachmentsExist {
 		for _, a := range m.attachments {
 			buf.WriteString(fmt.Sprintf("\n\n--%s\n", boundary))
@@ -152,7 +203,7 @@ func (m *mailer) createBody() []byte {
 		
 		buf.WriteString("--")
 	}
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 func (m *mailer) encodeRFC2047(value string) string {

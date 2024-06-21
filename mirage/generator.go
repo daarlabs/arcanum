@@ -126,7 +126,7 @@ func (g *generator) Link(name string, args ...Map) string {
 			return g.generatePath(r.Path, args...)
 		}
 	}
-	return ""
+	return name
 }
 
 func (g *generator) Query(args Map) string {

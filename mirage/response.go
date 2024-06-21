@@ -40,10 +40,14 @@ func (r *response) Status(statusCode int) Response {
 }
 
 func (r *response) Render(nodes ...gox.Node) error {
-	if r.route.Layout != nil && !r.ctx.Request().Is().Hx() {
+	isHx := r.ctx.Request().Is().Hx()
+	if !r.ctx.Request().Is().Get() && !isHx {
+		return r.ctx.Response().Redirect(r.ctx.Generate().Current())
+	}
+	if r.route.Layout != nil && !isHx {
 		return r.Html(gox.Render(r.route.Layout(r.ctx, nodes...)))
 	}
-	if r.ctx.Request().Is().Hx() {
+	if isHx {
 		styles := tempest.NamedStyles(r.ctx.Request().Action())
 		if len(styles) > 0 {
 			return r.Html(

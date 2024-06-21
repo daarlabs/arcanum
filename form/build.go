@@ -55,16 +55,43 @@ func Build[T any](b *Builder) (T, error) {
 func buildForm[T any](b *Builder) T {
 	form := new(T)
 	formRef := reflect.ValueOf(form)
+	fieldsMessages := make(map[string][]string)
+	isGet := b.request.Method == http.MethodGet
+	name := createFormName(b)
+	if isGet && b.state != nil {
+		fieldsMessages = b.state.MustGetForm(name)
+	}
 	for i, fb := range b.fields {
+		fieldMessages := make([]string, 0)
+		if isGet && b.state != nil {
+			storedFieldMessages, ok := fieldsMessages[fb.name]
+			if ok {
+				fieldMessages = append(fieldMessages, storedFieldMessages...)
+			}
+		}
 		fb.messages = b.messages
-		errors := buildFormField(formRef, fb, b.request)
+		errors := buildFormField(formRef, fb, b.request, fieldMessages)
+		if !isGet {
+			fieldsMessages[fb.name] = errors
+		}
 		b.fields[i].valid = len(errors) == 0
+	}
+	if !isGet && b.state != nil {
+		b.state.MustSaveForm(name, fieldsMessages)
 	}
 	buildBaseForm(formRef, b)
 	return *form
 }
 
-func buildFormField(formRef reflect.Value, fb *FieldBuilder, req *http.Request) []string {
+func createFormName(b *Builder) string {
+	result := b.request.URL.Path
+	if len(b.name) > 0 {
+		result += "-" + b.name
+	}
+	return result
+}
+
+func buildFormField(formRef reflect.Value, fb *FieldBuilder, req *http.Request, storedMessages []string) []string {
 	errors := make([]string, 0)
 	formField := formRef.Elem().FieldByName(strcase.ToCamel(fb.name))
 	if !formField.IsValid() {
@@ -73,78 +100,78 @@ func buildFormField(formRef reflect.Value, fb *FieldBuilder, req *http.Request) 
 	switch fb.dataType {
 	case fieldDataTypeString:
 		if fb.multiple {
-			field := createFormField[[]string](fb, req)
+			field := createFormField[[]string](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[string](fb, req)
+			field := createFormField[string](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 	case fieldDataTypeFloat:
 		if fb.multiple {
-			field := createFormField[[]float64](fb, req)
+			field := createFormField[[]float64](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[float64](fb, req)
+			field := createFormField[float64](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 	case fieldDataTypeInt:
 		if fb.multiple {
-			field := createFormField[[]int](fb, req)
+			field := createFormField[[]int](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[int](fb, req)
+			field := createFormField[int](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 	case fieldDataTypeInt64:
 		if fb.multiple {
-			field := createFormField[[]int64](fb, req)
+			field := createFormField[[]int64](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[int64](fb, req)
+			field := createFormField[int64](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 	case fieldDataTypeBool:
 		if fb.multiple {
-			field := createFormField[[]bool](fb, req)
+			field := createFormField[[]bool](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[bool](fb, req)
+			field := createFormField[bool](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 	case fieldDataTypeFile:
 		if fb.multiple {
-			field := createFormField[[]Multipart](fb, req)
+			field := createFormField[[]Multipart](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[Multipart](fb, req)
+			field := createFormField[Multipart](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 	case fieldDataTypeTime:
 		if fb.multiple {
-			field := createFormField[[]time.Time](fb, req)
+			field := createFormField[[]time.Time](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
 		if !fb.multiple {
-			field := createFormField[time.Time](fb, req)
+			field := createFormField[time.Time](fb, req, storedMessages)
 			formField.Set(reflect.ValueOf(field))
 			return field.Messages
 		}
@@ -175,7 +202,10 @@ func createBaseForm(b *Builder) Form {
 	}
 }
 
-func createFormField[T any](fb *FieldBuilder, req *http.Request) Field[T] {
+func createFormField[T any](fb *FieldBuilder, req *http.Request, messages []string) Field[T] {
+	if len(messages) == 0 && req.Method != http.MethodGet {
+		messages = append(messages, validateField(fb, req)...)
+	}
 	return Field[T]{
 		Id:        fb.id,
 		Name:      fb.name,
@@ -185,7 +215,7 @@ func createFormField[T any](fb *FieldBuilder, req *http.Request) Field[T] {
 		Text:      fb.text,
 		Value:     fb.value.(T),
 		Multiple:  fb.multiple,
-		Messages:  validateField(fb, req),
+		Messages:  messages,
 		Required:  fb.isRequired(),
 		Disabled:  fb.disabled,
 		Autofocus: fb.autofocus,
