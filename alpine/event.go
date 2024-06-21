@@ -59,6 +59,10 @@ func Click(script string, modifiers ...string) gox.Node {
 	return CreateEvent("click", script, modifiers...)
 }
 
+func Input(script string, modifiers ...string) gox.Node {
+	return CreateEvent("input", script, modifiers...)
+}
+
 func Submit(script string, modifiers ...string) gox.Node {
 	return CreateEvent("submit", script, modifiers...)
 }
