@@ -26,6 +26,10 @@ const (
 	idDirective         = "x-id"
 )
 
+func Directive(name, value string) gox.Node {
+	return gox.CreateAttribute[string]("x-" + name)(value)
+}
+
 func Data(data map[string]any) gox.Node {
 	bytes, err := json.Marshal(data)
 	if err != nil {

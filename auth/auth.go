@@ -19,6 +19,7 @@ type Manager interface {
 	Tfa() TfaManager
 	User() UserManager
 	CustomUser(id int, email string) UserManager
+	Manager() UserManager
 	
 	In(email, password string) (In, error)
 	Out() error
@@ -149,4 +150,8 @@ func (m *manager) User() UserManager {
 
 func (m *manager) CustomUser(id int, email string) UserManager {
 	return CreateUserManager(m.db, m.cache, id, email)
+}
+
+func (m *manager) Manager() UserManager {
+	return m.CustomUser(0, "")
 }

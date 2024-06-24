@@ -24,7 +24,8 @@ type TfaManager interface {
 	Enable(id ...int) error
 	Disable(id ...int) error
 	Verify(otp string) (string, error)
-	CreateQrImageBase64() (string, error)
+	VerifyCodes(email, codes string) (bool, error)
+	CreateQrImageBase64(id ...int) (string, error)
 	
 	MustGetPendingUserId() int
 	MustGetPendingVerification() bool
@@ -32,7 +33,8 @@ type TfaManager interface {
 	MustEnable(id ...int)
 	MustDisable(id ...int)
 	MustVerify(otp string) string
-	MustCreateQrImageBase64() string
+	MustVerifyCodes(email, codes string) bool
+	MustCreateQrImageBase64(id ...int) string
 }
 
 type tfaManager struct {
@@ -81,7 +83,7 @@ func (m tfaManager) GetPendingVerification() (bool, error) {
 	token := m.cookie.Get(TfaCookieKey)
 	n := len(token)
 	if n == 0 {
-		return false, ErrorMissingTfaCookie
+		return false, nil
 	}
 	return n > 0, nil
 }
@@ -97,7 +99,7 @@ func (m tfaManager) MustGetPendingVerification() bool {
 func (m tfaManager) GetActive() (bool, error) {
 	user, err := m.manager.User().Get()
 	if err != nil {
-		return user.Active, err
+		return false, err
 	}
 	return user.Tfa && len(user.TfaUrl.V) > 0 && len(user.TfaCodes.V) > 0 && len(user.TfaSecret.V) > 0, nil
 }
@@ -147,6 +149,22 @@ func (m tfaManager) MustVerify(otp string) string {
 	return token
 }
 
+func (m tfaManager) VerifyCodes(email, codes string) (bool, error) {
+	u, err := m.manager.CustomUser(0, email).Get()
+	if err != nil {
+		return false, err
+	}
+	return u.TfaCodes.V == codes, nil
+}
+
+func (m tfaManager) MustVerifyCodes(email, codes string) bool {
+	verified, err := m.VerifyCodes(email, codes)
+	if err != nil {
+		panic(err)
+	}
+	return verified
+}
+
 func (m tfaManager) Enable(id ...int) error {
 	userId, err := m.getUserId(id...)
 	if err != nil {
@@ -162,6 +180,9 @@ func (m tfaManager) Enable(id ...int) error {
 			AccountName: u.Email,
 		},
 	)
+	if err != nil {
+		return err
+	}
 	codes := uniuri.NewLen(tfaSecretCodesLength)
 	return quirk.New(m.db).
 		Q(fmt.Sprintf(`UPDATE %s`, usersTable)).
@@ -208,11 +229,15 @@ func (m tfaManager) MustDisable(id ...int) {
 	}
 }
 
-func (m tfaManager) CreateQrImageBase64() (string, error) {
+func (m tfaManager) CreateQrImageBase64(id ...int) (string, error) {
+	userId, err := m.getUserId(id...)
+	if err != nil {
+		return "", err
+	}
 	var u User
-	err := quirk.New(m.db).
+	err = quirk.New(m.db).
 		Q(fmt.Sprintf(`SELECT tfa_url FROM %s`, usersTable)).
-		Q("WHERE id = @id", quirk.Map{"id": u.Id}).
+		Q("WHERE id = @id", quirk.Map{"id": userId}).
 		Exec(&u)
 	if err != nil {
 		return "", err
@@ -232,8 +257,8 @@ func (m tfaManager) CreateQrImageBase64() (string, error) {
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buffer.Bytes()), nil
 }
 
-func (m tfaManager) MustCreateQrImageBase64() string {
-	qrImageBase64, err := m.CreateQrImageBase64()
+func (m tfaManager) MustCreateQrImageBase64(id ...int) string {
+	qrImageBase64, err := m.CreateQrImageBase64(id...)
 	if err != nil {
 		panic(err)
 	}

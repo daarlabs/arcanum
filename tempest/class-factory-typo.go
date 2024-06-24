@@ -65,6 +65,14 @@ func truncateClass(selector string, _ string) string {
 	)
 }
 
+func wordBreakClass(selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{word-break: %s;}`,
+		selector,
+		value,
+	)
+}
+
 func transformLineHeightKeyword(keyword string) string {
 	if keyword == "none" {
 		return "1"

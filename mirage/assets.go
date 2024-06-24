@@ -18,17 +18,7 @@ type assets struct {
 	fonts   []string
 }
 
-type viteManifest struct {
-	File    string   `json:"file"`
-	Name    string   `json:"name"`
-	Src     string   `json:"src"`
-	IsEntry bool     `json:"isEntry"`
-	Css     []string `json:"css"`
-}
-
 const (
-	manifestFilaname  = "manifest.json"
-	distDir           = "dist"
 	tempestAssetsPath = "/.tempest/assets/"
 )
 

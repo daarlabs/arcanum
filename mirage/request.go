@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	
+	"github.com/daarlabs/arcanum/env"
 	"github.com/daarlabs/arcanum/hx"
 	
 	"github.com/daarlabs/arcanum/util/constant/header"
@@ -24,6 +25,7 @@ type Request interface {
 	Path() string
 	PathValue(key string, defaultValue ...string) string
 	QueryParam(key string, defaultValue ...string) string
+	QueryMap() Map
 	Protocol() string
 	Raw() *http.Request
 	UserAgent() string
@@ -74,7 +76,11 @@ func (r request) Header() http.Header {
 }
 
 func (r request) Host() string {
-	return r.Protocol() + "://" + r.r.Host
+	host := r.r.Header.Get("X-Forwarded-Host")
+	if len(host) == 0 {
+		host = r.r.Host
+	}
+	return r.Protocol() + "://" + host
 }
 
 func (r request) Ip() string {
@@ -128,8 +134,24 @@ func (r request) QueryParam(key string, defaultValue ...string) string {
 	return value
 }
 
+func (r request) QueryMap() Map {
+	qp := r.r.URL.Query()
+	result := make(Map)
+	for k, v := range qp {
+		if k == Action || k == langQueryKey {
+			continue
+		}
+		result[k] = v
+	}
+	return result
+}
+
 func (r request) Protocol() string {
-	if r.r.TLS == nil {
+	protocol := r.r.Header.Get("X-Forwarded-Proto")
+	if len(protocol) > 0 {
+		return protocol
+	}
+	if env.Development() {
 		return "http"
 	}
 	return "https"

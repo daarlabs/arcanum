@@ -33,6 +33,11 @@ const (
 	paramRegex = `[0-9a-zA-Z]+`
 )
 
+const (
+	dynamicName = "dynamic"
+	dynamicPath = "/{path...}"
+)
+
 func (r *router) Static(path, dir string) Router {
 	r.mux.Handle(http.MethodGet+" "+path, http.StripPrefix(path, http.FileServer(http.Dir(dir))))
 	return r
@@ -80,36 +85,41 @@ func (r *router) Group(path any, name ...string) Router {
 }
 
 func (r *router) createWildcardRoute() {
-	method := http.MethodGet
 	path := "/{path...}"
-	r.mux.HandleFunc(
-		r.createRoutePattern(method, path),
-		r.createHandler(
-			method, path, "wildcard", func(c Ctx) error {
-				c.Response().Status(http.StatusNotFound)
-				return r.core.errorHandler(c)
-			},
-		),
-	)
+	for _, method := range []string{
+		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete,
+	} {
+		r.mux.HandleFunc(
+			r.createRoutePattern(method, path),
+			r.createHandler(
+				method, path, dynamicName, func(c Ctx) error {
+					c.Response().Status(http.StatusNotFound)
+					return r.core.dynamicHandler(c)
+				},
+			),
+		)
+	}
 }
 
 func (r *router) createDynamicAssetsRoute() {
 	path := tempestAssetsPath + "{name}"
-	r.mux.HandleFunc(
-		fmt.Sprintf("%s %s", http.MethodGet, path),
-		r.createHandler(
-			http.MethodGet, path, "assets", func(c Ctx) error {
-				name := c.Request().PathValue("name")
-				if strings.HasSuffix(name, fileSuffix.Css) && strings.Contains(name, "-"+r.assets.code+".") {
-					return c.Response().Asset(name, []byte(tempest.Styles()))
-				}
-				if strings.HasSuffix(name, fileSuffix.Js) && strings.Contains(name, "-"+r.assets.code+".") {
-					return c.Response().Asset(name, []byte(tempest.Scripts()))
-				}
-				return c.Response().Status(http.StatusNotFound).Error(http.StatusText(http.StatusNotFound))
-			},
-		),
-	)
+	for _, method := range []string{http.MethodGet, http.MethodHead} {
+		r.mux.HandleFunc(
+			fmt.Sprintf("%s %s", method, path),
+			r.createHandler(
+				method, path, "assets", func(c Ctx) error {
+					name := c.Request().PathValue("name")
+					if strings.HasSuffix(name, fileSuffix.Css) && strings.Contains(name, "-"+r.assets.code+".") {
+						return c.Response().Asset(name, []byte(tempest.Styles()))
+					}
+					if strings.HasSuffix(name, fileSuffix.Js) && strings.Contains(name, "-"+r.assets.code+".") {
+						return c.Response().Asset(name, []byte(tempest.Scripts()))
+					}
+					return c.Response().Status(http.StatusNotFound).Error(http.StatusText(http.StatusNotFound))
+				},
+			),
+		)
+	}
 }
 
 func (r *router) createCanonicalHandler() Handler {

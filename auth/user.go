@@ -17,19 +17,23 @@ import (
 )
 
 type UserManager interface {
+	Exists(id ...int) (bool, error)
 	Get(id ...int) (User, error)
 	Create(r User) (int, error)
 	Update(r User, columns ...string) error
 	ResetPassword(token ...string) (string, error)
+	DestroyResetPassword(token string) error
 	UpdatePassword(actualPassword, newPassword string) error
 	ForceUpdatePassword(newPassword string) error
 	Enable(id ...int) error
 	Disable(id ...int) error
 	
+	MustExists(id ...int) bool
 	MustGet(id ...int) User
 	MustCreate(r User) int
 	MustUpdate(r User, columns ...string)
 	MustResetPassword(token ...string) string
+	MustDestroyResetPassword(token string)
 	MustUpdatePassword(actualPassword, newPassword string)
 	MustForceUpdatePassword(newPassword string)
 	MustEnable(id ...int)
@@ -95,6 +99,22 @@ func CreateUserManager(db *quirk.DB, cache cache.Client, id int, email string) U
 		data:       make(map[string]any),
 		driverName: db.DriverName(),
 	}
+}
+
+func (u *userManager) Exists(id ...int) (bool, error) {
+	user, err := u.Get(id...)
+	if err != nil {
+		return false, err
+	}
+	return user.Id > 0, nil
+}
+
+func (u *userManager) MustExists(id ...int) bool {
+	exists, err := u.Exists(id...)
+	if err != nil {
+		panic(err)
+	}
+	return exists
 }
 
 func (u *userManager) Get(id ...int) (User, error) {
@@ -193,6 +213,17 @@ func (u *userManager) MustResetPassword(token ...string) string {
 		panic(err)
 	}
 	return t
+}
+
+func (u *userManager) DestroyResetPassword(token string) error {
+	return u.cache.Destroy(u.createResetPasswordKey(token))
+}
+
+func (u *userManager) MustDestroyResetPassword(token string) {
+	err := u.DestroyResetPassword(token)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (u *userManager) UpdatePassword(actualPassword, newPassword string) error {

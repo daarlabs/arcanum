@@ -55,12 +55,13 @@ type TypoClass interface {
 	LhNone(modifiers ...Modifier) Tempest
 	LhRelax(modifiers ...Modifier) Tempest
 	LhLoose(modifiers ...Modifier) Tempest
+	BreakAll(modifiers ...Modifier) Tempest
 }
 
 func (b *Builder) Text(name string, code int, modifiers ...Modifier) Tempest {
 	return b.createStyle(
 		style{
-			prefix: createColorPrefix("font", name, code),
+			prefix: createColorPrefix("text", name, code),
 			value:  GlobalConfig.Color[name][code],
 			fn: func(selector, value string) string {
 				return colorClass("color", selector, value, createOpacity(modifiers))
@@ -394,6 +395,17 @@ func (b *Builder) Truncate(modifiers ...Modifier) Tempest {
 			prefix:    "truncate",
 			value:     "",
 			fn:        truncateClass,
+			modifiers: modifiers,
+		},
+	)
+}
+
+func (b *Builder) BreakAll(modifiers ...Modifier) Tempest {
+	return b.createStyle(
+		style{
+			prefix:    "break-all",
+			value:     "break-all",
+			fn:        wordBreakClass,
 			modifiers: modifiers,
 		},
 	)

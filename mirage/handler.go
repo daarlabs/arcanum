@@ -134,7 +134,7 @@ func (h handler) createRecover(c *ctx) {
 			err = c.Response().Html(gox.Render(devtool.CreateRecoverPage(c.Generate().Assets(), err)))
 		}
 		if !env.Development() {
-			err = h.core.errorHandler(c)
+			err = h.core.dynamicHandler(c)
 		}
 		c.err = nil
 		if err != nil {

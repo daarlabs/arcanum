@@ -11,7 +11,7 @@ import (
 
 type Mirage interface {
 	Router
-	ErrorHandler(handler Handler) Mirage
+	DynamicHandler(handler Handler) Mirage
 	Layout() LayoutManager
 	Run(address string)
 	Mux() *http.ServeMux
@@ -21,12 +21,12 @@ type Mirage interface {
 type core struct {
 	*router
 	*assets
-	config       config.Config
-	errorHandler Handler
-	layout       *layout
-	mux          *http.ServeMux
-	plugins      []Plugin
-	routes       []*Route
+	config         config.Config
+	dynamicHandler Handler
+	layout         *layout
+	mux            *http.ServeMux
+	plugins        []Plugin
+	routes         []*Route
 }
 
 const (
@@ -41,7 +41,7 @@ const (
 )
 
 const (
-	Version = "0.1.0"
+	Version = "0.1.7"
 )
 
 func New(cfg config.Config) Mirage {
@@ -49,12 +49,12 @@ func New(cfg config.Config) Mirage {
 	mux := http.NewServeMux()
 	rts := make([]*Route, 0)
 	c := &core{
-		config:       cfg,
-		errorHandler: defaultErrorHandler,
-		layout:       createLayout(),
-		mux:          mux,
-		routes:       rts,
-		plugins:      make([]Plugin, 0),
+		config:         cfg,
+		dynamicHandler: defaultDynamicHandler,
+		layout:         createLayout(),
+		mux:            mux,
+		routes:         rts,
+		plugins:        make([]Plugin, 0),
 	}
 	c.assets = createAssets(cfg)
 	c.router = &router{
@@ -65,14 +65,14 @@ func New(cfg config.Config) Mirage {
 		assets: c.assets,
 	}
 	c.router.core = c
-	c.router.createWildcardRoute()
 	c.router.createDynamicAssetsRoute()
+	c.router.createWildcardRoute()
 	c.onInit()
 	return c
 }
 
-func (c *core) ErrorHandler(handler Handler) Mirage {
-	c.errorHandler = handler
+func (c *core) DynamicHandler(handler Handler) Mirage {
+	c.dynamicHandler = handler
 	return c
 }
 

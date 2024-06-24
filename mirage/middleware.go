@@ -105,7 +105,8 @@ func createFirewallMiddleware(firewalls []firewall.Firewall) Handler {
 		}
 		if session.Super {
 			if err := c.Auth().Session().Renew(); err != nil {
-				return c.Response().Status(http.StatusInternalServerError).Error(err)
+				c.Auth().MustOut()
+				return c.Response().Redirect(c.Generate().Current())
 			}
 		}
 		results := make([]firewall.Result, len(firewalls))
@@ -163,7 +164,8 @@ func createFirewallMiddleware(firewalls []firewall.Firewall) Handler {
 		}
 		if allowed {
 			if err := c.Auth().Session().Renew(); err != nil {
-				return c.Response().Status(http.StatusInternalServerError).Error(err)
+				c.Auth().MustOut()
+				return c.Response().Redirect(c.Generate().Current())
 			}
 		}
 		return c.Continue()
