@@ -38,6 +38,10 @@ func Development() bool {
 	return Get() == development
 }
 
+func Empty() bool {
+	return len(Get()) == 0
+}
+
 func Staging() bool {
 	return Get() == staging
 }
