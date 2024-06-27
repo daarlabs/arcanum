@@ -11,7 +11,17 @@ import (
 )
 
 type Migrator interface {
-	Run()
+	Run() error
+	Init() error
+	New() error
+	Up() error
+	Down() error
+	
+	MustRun()
+	MustInit()
+	MustNew()
+	MustUp()
+	MustDown()
 }
 
 type migrator struct {
@@ -54,7 +64,7 @@ func New(dir string, databases map[string]*quirk.DB, migrations []*Migration) Mi
 	return m
 }
 
-func (m *migrator) Run() {
+func (m *migrator) Run() error {
 	m.init = flag.Bool("init", false, "Init migrations")
 	m.new = flag.Bool("new", false, "New migration")
 	m.up = flag.Bool("up", false, "Up migrations")
@@ -62,26 +72,36 @@ func (m *migrator) Run() {
 	flag.Parse()
 	flag.Parse()
 	if *m.init {
-		m.Init()
-		return
+		return m.Init()
 	}
 	if *m.new {
-		m.New()
-		return
+		return m.New()
 	}
 	if *m.up {
-		m.Up()
-		return
+		return m.Up()
 	}
 	if *m.down {
-		m.Down()
-		return
+		return m.Down()
+	}
+	return nil
+}
+
+func (m *migrator) MustRun() {
+	if err := m.Run(); err != nil {
+		panic(err)
 	}
 }
 
-func (m *migrator) Init() {
+func (m *migrator) Init() error {
 	for _, db := range m.databases {
-		quirk.New(db).Q(
+		exists, err := m.migrationsTableExists(db)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
+		if err := quirk.New(db).Q(
 			fmt.Sprintf(
 				`CREATE TABLE IF NOT EXISTS %s (
     id serial primary key,
@@ -90,33 +110,54 @@ func (m *migrator) Init() {
     updated_at timestamp not null default current_timestamp
     )`, migrationsTable,
 			),
-		).MustExec()
+		).Exec(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *migrator) MustInit() {
+	if err := m.Init(); err != nil {
+		panic(err)
 	}
 }
 
-func (m *migrator) New() {
+func (m *migrator) New() error {
 	if len(m.dir) == 0 {
-		return
+		return ErrorInvalidDir
 	}
 	m.check(os.MkdirAll(m.dir, os.ModePerm))
 	filepath := fmt.Sprintf("%s/%d.go", m.dir, time.Now().UnixNano())
 	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
-		return
+		return err
 	}
 	file, err := os.Create(filepath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	_, err = file.WriteString(migrationFileContent)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *migrator) MustNew() {
+	if err := m.New(); err != nil {
 		panic(err)
 	}
 }
 
-func (m *migrator) Up() {
-	existingMigrationsNames := m.getExistingMigrationsNames()
+func (m *migrator) Up() error {
+	existingMigrationsNames, err := m.getExistingMigrationsNames()
+	if err != nil {
+		return err
+	}
 	for _, db := range m.databases {
-		db.MustBegin()
+		if _, err := db.Begin(); err != nil {
+			return err
+		}
 	}
 	for _, item := range m.migrations {
 		if slices.Contains(existingMigrationsNames, item.name) {
@@ -124,10 +165,14 @@ func (m *migrator) Up() {
 		}
 		fmt.Printf("Up [%s]...\n", item.name)
 		item.up(&control{m})
-		m.insertMigration(item.name)
+		if err := m.insertMigration(item.name); err != nil {
+			return err
+		}
 	}
 	for _, db := range m.databases {
-		db.MustCommit()
+		if err := db.Commit(); err != nil {
+			return err
+		}
 	}
 	for _, item := range m.migrations {
 		if slices.Contains(existingMigrationsNames, item.name) {
@@ -135,12 +180,24 @@ func (m *migrator) Up() {
 		}
 		fmt.Printf("Up successful [%s]!\n", item.name)
 	}
+	return nil
 }
 
-func (m *migrator) Down() {
-	lastMigrationName := m.getLastMigrationName()
+func (m *migrator) MustUp() {
+	if err := m.Up(); err != nil {
+		panic(err)
+	}
+}
+
+func (m *migrator) Down() error {
+	lastMigrationName, err := m.getLastMigrationName()
+	if err != nil {
+		return err
+	}
 	for _, db := range m.databases {
-		db.MustBegin()
+		if _, err := db.Begin(); err != nil {
+			return err
+		}
 	}
 	for _, item := range m.migrations {
 		if !slices.Contains(lastMigrationName, item.name) {
@@ -148,16 +205,27 @@ func (m *migrator) Down() {
 		}
 		fmt.Printf("Down [%s]...\n", item.name)
 		item.down(&control{m})
-		m.deleteMigration(item.name)
+		if err := m.deleteMigration(item.name); err != nil {
+			return err
+		}
 	}
 	for _, db := range m.databases {
-		db.MustCommit()
+		if err := db.Commit(); err != nil {
+			return err
+		}
 	}
 	for _, item := range m.migrations {
 		if !slices.Contains(lastMigrationName, item.name) {
 			continue
 		}
 		fmt.Printf("Down successful [%s]!\n", item.name)
+	}
+	return nil
+}
+
+func (m *migrator) MustDown() {
+	if err := m.Down(); err != nil {
+		panic(err)
 	}
 }
 
@@ -168,24 +236,34 @@ func (m *migrator) check(err error) {
 	panic(err)
 }
 
-func (m *migrator) getLastMigrationName() []string {
+func (m *migrator) getLastMigrationName() ([]string, error) {
 	result := make([]string, 0)
 	for _, db := range m.databases {
-		if !m.migrationsTableExists(db) {
+		exists, err := m.migrationsTableExists(db)
+		if err != nil {
+			return result, err
+		}
+		if !exists {
 			continue
 		}
 		var r string
-		quirk.New(db).Q(fmt.Sprintf(`SELECT name FROM %s ORDER BY created_at DESC LIMIT 1`, migrationsTable)).MustExec(&r)
+		if err := quirk.New(db).Q(
+			fmt.Sprintf(
+				`SELECT name FROM %s ORDER BY created_at DESC LIMIT 1`, migrationsTable,
+			),
+		).Exec(&r); err != nil {
+			return result, err
+		}
 		if !slices.Contains(result, r) {
 			result = append(result, r)
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (m *migrator) migrationsTableExists(db *quirk.DB) bool {
+func (m *migrator) migrationsTableExists(db *quirk.DB) (bool, error) {
 	var r bool
-	db.Q(
+	if err := db.Q(
 		fmt.Sprintf(
 			`SELECT EXISTS (
 SELECT 1
@@ -193,33 +271,49 @@ FROM pg_tables
 WHERE tablename = '%s'
 ) AS table_existence`, migrationsTable,
 		),
-	).MustExec(&r)
-	return r
+	).Exec(&r); err != nil {
+		return r, err
+	}
+	return r, nil
 }
 
-func (m *migrator) getExistingMigrationsNames() []string {
+func (m *migrator) getExistingMigrationsNames() ([]string, error) {
 	result := make([]string, 0)
 	for _, db := range m.databases {
-		if !m.migrationsTableExists(db) {
+		exists, err := m.migrationsTableExists(db)
+		if err != nil {
+			return result, err
+		}
+		if !exists {
 			continue
 		}
 		r := make([]string, 0)
-		quirk.New(db).Q(fmt.Sprintf(`SELECT name FROM %s ORDER BY created_at ASC`, migrationsTable)).MustExec(&r)
+		if err := quirk.New(db).Q(
+			fmt.Sprintf(
+				`SELECT name FROM %s ORDER BY created_at ASC`, migrationsTable,
+			),
+		).Exec(&r); err != nil {
+			return result, err
+		}
 		for _, name := range r {
 			if !slices.Contains(result, name) {
 				result = append(result, name)
 			}
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (m *migrator) insertMigration(name string) {
+func (m *migrator) insertMigration(name string) error {
 	for _, db := range m.databases {
-		if !m.migrationsTableExists(db) {
+		exists, err := m.migrationsTableExists(db)
+		if err != nil {
+			return err
+		}
+		if !exists {
 			continue
 		}
-		quirk.New(db).
+		if err := quirk.New(db).
 			Q(
 				fmt.Sprintf(
 					`INSERT INTO %s (id, name, created_at, updated_at) VALUES (DEFAULT, @name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`,
@@ -227,17 +321,27 @@ func (m *migrator) insertMigration(name string) {
 				),
 				quirk.Map{"name": name},
 			).
-			MustExec()
+			Exec(); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (m *migrator) deleteMigration(name string) {
+func (m *migrator) deleteMigration(name string) error {
 	for _, db := range m.databases {
-		if !m.migrationsTableExists(db) {
+		exists, err := m.migrationsTableExists(db)
+		if err != nil {
+			return err
+		}
+		if !exists {
 			continue
 		}
-		quirk.New(db).Q(
+		if err := quirk.New(db).Q(
 			fmt.Sprintf(`DELETE FROM %s WHERE name = @name`, migrationsTable), quirk.Map{"name": name},
-		).MustExec()
+		).Exec(); err != nil {
+			return err
+		}
 	}
+	return nil
 }
