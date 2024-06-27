@@ -3,6 +3,7 @@ package mirage
 import (
 	"fmt"
 	"net/url"
+	"time"
 	
 	"github.com/dchest/uniuri"
 	
@@ -19,7 +20,8 @@ type assets struct {
 }
 
 const (
-	tempestAssetsPath = "/.tempest/assets/"
+	tempestAssetsPath          = "/.tempest/assets/"
+	tempestAssetsCacheDuration = 7 * 24 * time.Hour
 )
 
 func createAssets(config config.Config) *assets {

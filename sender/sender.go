@@ -19,6 +19,7 @@ type Send interface {
 
 type ExtendableSend interface {
 	Header() http.Header
+	Empty() error
 	Error(e any) error
 	Json(value any) error
 	Html(value string) error
@@ -68,6 +69,14 @@ func (s *Sender) Status(statusCode int) Send {
 	}
 	s.StatusCode = statusCode
 	return s
+}
+
+func (s *Sender) Empty() error {
+	if !*s.write {
+		return nil
+	}
+	s.DataType = dataType.Empty
+	return nil
 }
 
 func (s *Sender) Error(e any) error {

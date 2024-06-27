@@ -1,6 +1,7 @@
 package dataType
 
 const (
+	Empty    = "empty"
 	Json     = "json"
 	Xml      = "xml"
 	Html     = "html"

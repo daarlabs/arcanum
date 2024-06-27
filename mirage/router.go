@@ -2,6 +2,7 @@ package mirage
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/daarlabs/arcanum/tempest"
 	"github.com/daarlabs/arcanum/util"
 	"github.com/daarlabs/arcanum/util/constant/fileSuffix"
+	"github.com/daarlabs/arcanum/util/constant/header"
 )
 
 type Router interface {
@@ -35,7 +37,6 @@ const (
 
 const (
 	dynamicName = "dynamic"
-	dynamicPath = "/{path...}"
 )
 
 func (r *router) Static(path, dir string) Router {
@@ -108,7 +109,18 @@ func (r *router) createDynamicAssetsRoute() {
 			fmt.Sprintf("%s %s", method, path),
 			r.createHandler(
 				method, path, "assets", func(c Ctx) error {
+					if c.Request().Header().Get("If-None-Match") == r.assets.code {
+						return c.Response().Status(http.StatusNotModified).Empty()
+					}
 					name := c.Request().PathValue("name")
+					c.Response().Header().Set(
+						header.CacheControl,
+						fmt.Sprintf("public, max-age=%d", int(math.Round(tempestAssetsCacheDuration.Seconds()))),
+					)
+					c.Response().Header().Set(
+						header.ETag,
+						r.assets.code,
+					)
 					if strings.HasSuffix(name, fileSuffix.Css) && strings.Contains(name, "-"+r.assets.code+".") {
 						return c.Response().Asset(name, []byte(tempest.Styles()))
 					}

@@ -111,8 +111,13 @@ func (h handler) createResponse(c *ctx) {
 	if c.response.DataType == dataType.Asset {
 		c.w.Header().Set(header.AcceptRanges, "bytes")
 	}
-	c.w.Header().Set(header.ContentType, c.response.ContentType)
+	if c.response.DataType != dataType.Empty {
+		c.w.Header().Set(header.ContentType, c.response.ContentType)
+	}
 	c.w.WriteHeader(c.response.StatusCode)
+	if c.response.DataType == dataType.Empty {
+		return
+	}
 	if _, c.err = c.w.Write(c.response.Bytes); c.err != nil {
 		http.Error(c.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -131,7 +136,7 @@ func (h handler) createRecover(c *ctx) {
 		}
 		c.err = err
 		if env.Development() {
-			err = c.Response().Html(gox.Render(devtool.CreateRecoverPage(c.Generate().Assets(), err)))
+			err = c.Response().Html(gox.Render(devtool.CreateRecoverPage(c.Generate().Assets(c.Request().Name()), err)))
 		}
 		if !env.Development() {
 			err = h.core.dynamicHandler(c)

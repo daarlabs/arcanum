@@ -14,7 +14,7 @@ import (
 )
 
 type Generator interface {
-	Assets() gox.Node
+	Assets(name string) gox.Node
 	Action(name string, args ...Map) string
 	Current(qpm ...Map) string
 	Csrf(name string) gox.Node
@@ -28,7 +28,7 @@ type generator struct {
 	*ctx
 }
 
-func (g *generator) Assets() gox.Node {
+func (g *generator) Assets(name string) gox.Node {
 	if g.assets == nil {
 		return gox.Fragment()
 	}
@@ -53,6 +53,9 @@ func (g *generator) Assets() gox.Node {
 		),
 		gox.Range(
 			g.assets.styles, func(style string, _ int) gox.Node {
+				if strings.Contains(style, tempestAssetsPath) {
+					style += "?name=" + name
+				}
 				return gox.Link(gox.Rel("stylesheet"), gox.Type("text/css"), gox.Href(style))
 			},
 		),
