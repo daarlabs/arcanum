@@ -11,6 +11,7 @@ import (
 )
 
 type Migrator interface {
+	IgnoreDatabase(names ...string) Migrator
 	Run() error
 	Init() error
 	New() error
@@ -25,13 +26,14 @@ type Migrator interface {
 }
 
 type migrator struct {
-	dir        string
-	databases  map[string]*quirk.DB
-	migrations []*Migration
-	init       *bool
-	new        *bool
-	up         *bool
-	down       *bool
+	dir            string
+	databases      map[string]*quirk.DB
+	ignoreDatabase []string
+	migrations     []*Migration
+	init           *bool
+	new            *bool
+	up             *bool
+	down           *bool
 }
 
 const (
@@ -60,7 +62,12 @@ func init() {
 )
 
 func New(dir string, databases map[string]*quirk.DB, migrations []*Migration) Migrator {
-	m := &migrator{dir: dir, databases: databases, migrations: migrations}
+	m := &migrator{dir: dir, databases: databases, migrations: migrations, ignoreDatabase: make([]string, 0)}
+	return m
+}
+
+func (m *migrator) IgnoreDatabase(names ...string) Migrator {
+	m.ignoreDatabase = append(m.ignoreDatabase, names...)
 	return m
 }
 
@@ -93,7 +100,10 @@ func (m *migrator) MustRun() {
 }
 
 func (m *migrator) Init() error {
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		exists, err := m.migrationsTableExists(db)
 		if err != nil {
 			return err
@@ -154,7 +164,10 @@ func (m *migrator) Up() error {
 	if err != nil {
 		return err
 	}
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		if _, err := db.Begin(); err != nil {
 			return err
 		}
@@ -169,7 +182,10 @@ func (m *migrator) Up() error {
 			return err
 		}
 	}
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		if err := db.Commit(); err != nil {
 			return err
 		}
@@ -194,7 +210,10 @@ func (m *migrator) Down() error {
 	if err != nil {
 		return err
 	}
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		if _, err := db.Begin(); err != nil {
 			return err
 		}
@@ -209,7 +228,10 @@ func (m *migrator) Down() error {
 			return err
 		}
 	}
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		if err := db.Commit(); err != nil {
 			return err
 		}
@@ -238,7 +260,10 @@ func (m *migrator) check(err error) {
 
 func (m *migrator) getLastMigrationName() ([]string, error) {
 	result := make([]string, 0)
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		exists, err := m.migrationsTableExists(db)
 		if err != nil {
 			return result, err
@@ -279,7 +304,10 @@ WHERE tablename = '%s'
 
 func (m *migrator) getExistingMigrationsNames() ([]string, error) {
 	result := make([]string, 0)
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		exists, err := m.migrationsTableExists(db)
 		if err != nil {
 			return result, err
@@ -305,7 +333,10 @@ func (m *migrator) getExistingMigrationsNames() ([]string, error) {
 }
 
 func (m *migrator) insertMigration(name string) error {
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		exists, err := m.migrationsTableExists(db)
 		if err != nil {
 			return err
@@ -329,7 +360,10 @@ func (m *migrator) insertMigration(name string) error {
 }
 
 func (m *migrator) deleteMigration(name string) error {
-	for _, db := range m.databases {
+	for name, db := range m.databases {
+		if slices.Contains(m.ignoreDatabase, name) {
+			continue
+		}
 		exists, err := m.migrationsTableExists(db)
 		if err != nil {
 			return err
