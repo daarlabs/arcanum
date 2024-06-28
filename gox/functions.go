@@ -17,3 +17,9 @@ func Write(w io.Writer, nodes ...Node) error {
 	_, err := w.Write([]byte(Render(nodes...)))
 	return err
 }
+
+func MustWrite(w io.Writer, nodes ...Node) {
+	if err := Write(w, nodes...); err != nil {
+		panic(err)
+	}
+}

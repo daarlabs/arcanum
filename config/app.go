@@ -1,8 +1,8 @@
 package config
 
 type App struct {
-	Plugin bool
-	Name   string
-	Public string
-	Assets string
+	Plugin         bool
+	Name           string
+	PublicUrlPath  string
+	PublicLocalDir string
 }

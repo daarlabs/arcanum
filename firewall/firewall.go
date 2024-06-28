@@ -70,6 +70,11 @@ func (f *Firewall) Try(attempt Attempt) Result {
 	if len(f.Secret) > 0 && f.Secret == attempt.Secret {
 		return Result{Ok: true}
 	}
+	for _, ar := range attempt.Roles {
+		if ar.Super {
+			return Result{Ok: true}
+		}
+	}
 	if len(f.Roles) > 0 {
 		for _, fr := range f.Roles {
 			for _, ar := range attempt.Roles {

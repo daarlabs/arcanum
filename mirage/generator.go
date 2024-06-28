@@ -158,7 +158,7 @@ func (g *generator) Query(args Map) string {
 }
 
 func (g *generator) PublicUrl(path string) string {
-	r, err := url.JoinPath("/", g.config.Router.Prefix.Proxy, g.config.App.Public, path)
+	r, err := url.JoinPath("/", g.config.Router.Prefix.Proxy, g.config.App.PublicUrlPath, path)
 	if err != nil {
 		return path
 	}

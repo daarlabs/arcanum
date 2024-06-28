@@ -41,7 +41,7 @@ const (
 )
 
 const (
-	Version = "0.1.9"
+	Version = "0.2.1"
 )
 
 func New(cfg config.Config) Mirage {

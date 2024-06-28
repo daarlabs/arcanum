@@ -60,7 +60,7 @@ func createCsrfMiddleware() Handler {
 				return c.Continue()
 			}
 			path := c.Request().Path()
-			if strings.HasPrefix(path, tempestAssetsPath) || strings.HasPrefix(path, c.Config().App.Public) {
+			if strings.HasPrefix(path, tempestAssetsPath) || strings.HasPrefix(path, c.Config().App.PublicUrlPath) {
 				return c.Continue()
 			}
 			if err := c.Csrf().Clean(c.Request().Name()); err != nil {
